@@ -51,10 +51,16 @@ table{width:100%;border-collapse:collapse}th,td{padding:11px;border-bottom:1px s
 </div>
 
 <main id="adminMain" style="display:none">
+
+<!-- Global Low Stock Warning Banner -->
+<div id="globalLowStockContainer"></div>
+
 <div class="stats">
   <div class="stat"><span style="color:var(--muted);font-size:11px">Total Shops</span><b id="sShops">0</b></div>
   <div class="stat"><span style="color:var(--muted);font-size:11px">Total Products</span><b id="sTotal">0</b></div>
   <div class="stat"><span style="color:var(--muted);font-size:11px">Total Sales</span><b id="sSales">KSh 0</b></div>
+  <div class="stat"><span style="color:var(--muted);font-size:11px">Total Cash</span><b id="sCash">KSh 0</b></div>
+  <div class="stat"><span style="color:var(--muted);font-size:11px">Total M-PESA</span><b id="sMpesa">KSh 0</b></div>
   <div class="stat"><span style="color:var(--muted);font-size:11px">Total Debts</span><b id="sDebts">KSh 0</b></div>
   <div class="stat"><span style="color:var(--muted);font-size:11px">Stock Value</span><b id="sValue">KSh 0</b></div>
 </div>
@@ -70,6 +76,17 @@ table{width:100%;border-collapse:collapse}th,td{padding:11px;border-bottom:1px s
 <div id="tab-shops" class="card">
   <div style="display:flex;justify-content:space-between;align-items:center"><h3>All Shops — Reset Password, Eye Icon, Delete</h3><button onclick="loadAdmin()" class="btn btn-white">↻ Refresh</button></div>
   <div style="overflow:auto"><table><thead><tr><th>Shop #</th><th>Name</th><th>Location</th><th>Phone</th><th>Password (Eye)</th><th>Admin</th><th>Active</th><th>Actions</th></tr></thead><tbody id="shopsBody"></tbody></table></div>
+  
+  <div style="margin-top:20px;">
+    <h4>📊 Shop Performance Summary</h4>
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>Shop Name</th><th>Location</th><th>Total Revenue</th></tr></thead>
+        <tbody id="shopPerformanceBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <div style="margin-top:16px;padding:12px;background:#fff7e8;border-radius:8px">
     <h4 style="margin:0 0 8px">🔑 Reset ANY Shop Password (with eye icon)</h4>
     <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
@@ -83,11 +100,32 @@ table{width:100%;border-collapse:collapse}th,td{padding:11px;border-bottom:1px s
   </div>
 </div>
 
-<div id="tab-products" class="card" style="display:none"><div style="display:flex;justify-content:space-between"><h3>All Products — LIVE (All Shops)</h3><button onclick="loadAdmin()" class="btn btn-white">↻ Refresh</button></div><div style="overflow:auto"><table><thead><tr><th>Shop</th><th>Product</th><th>Category</th><th>Qty</th><th>Cost</th><th>Price</th><th>Action</th></tr></thead><tbody id="adminBody"></tbody></table></div></div>
+<div id="tab-products" class="card" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h3>All Products — LIVE (All Shops)</h3>
+    <div style="display:flex;gap:8px;">
+      <button onclick="exportProductsToCSV()" class="btn btn-green" style="font-size:11px;">📥 Export Products CSV</button>
+      <button onclick="loadAdmin()" class="btn btn-white">↻ Refresh</button>
+    </div>
+  </div>
+  <div style="overflow:auto"><table><thead><tr><th>Shop</th><th>Product</th><th>Category</th><th>Qty</th><th>Cost</th><th>Price</th><th>Action</th></tr></thead><tbody id="adminBody"></tbody></table></div>
+</div>
 
-<div id="tab-sales" class="card" style="display:none"><h3>All Sales — LIVE from Supabase (All Shops)</h3><div style="overflow:auto"><table><thead><tr><th>Date</th><th>Shop #</th><th>Product</th><th>Qty</th><th>Amount</th><th>Payment</th><th>Action</th></tr></thead><tbody id="salesBody"></tbody></table></div></div>
+<div id="tab-sales" class="card" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h3>All Sales — LIVE from Supabase (All Shops)</h3>
+    <div style="display:flex;gap:8px;">
+      <button onclick="exportSalesToCSV()" class="btn btn-green" style="font-size:11px;">📥 Export Sales CSV</button>
+      <button onclick="loadAdmin()" class="btn btn-white">↻ Refresh</button>
+    </div>
+  </div>
+  <div style="overflow:auto"><table><thead><tr><th>Date</th><th>Shop #</th><th>Product</th><th>Qty</th><th>Amount</th><th>Payment</th><th>Action</th></tr></thead><tbody id="salesBody"></tbody></table></div>
+</div>
 
-<div id="tab-debts" class="card" style="display:none"><h3>All Customer Debts — LIVE (All Shops)</h3><div style="overflow:auto"><table><thead><tr><th>Customer</th><th>Phone</th><th>Shop #</th><th>Amount</th><th>Action</th></tr></thead><tbody id="debtsBody"></tbody></table></div></div>
+<div id="tab-debts" class="card" style="display:none">
+  <h3>All Customer Debts — LIVE (All Shops)</h3>
+  <div style="overflow:auto"><table><thead><tr><th>Customer</th><th>Phone</th><th>Shop #</th><th>Amount</th><th>Action</th></tr></thead><tbody id="debtsBody"></tbody></table></div>
+</div>
 
 <div id="tab-settings" class="card" style="display:none">
   <h3>⚙️ Settings — Change Admin Password Freely (Eye Icon)</h3>
@@ -131,12 +169,55 @@ async function loadShopOptions(){
   sel2.innerHTML=data.map(s=>`<option value="${s.id}">${s.shop_name} (#${s.id})</option>`).join('');
 }
 
+function renderGlobalLowStock(products, shops) {
+  const container = document.getElementById("globalLowStockContainer");
+  if(!container) return;
+  const lowItems = (products || []).filter(p => Number(p.quantity) <= 5);
+  if(lowItems.length === 0) {
+    container.innerHTML = `<div class="card" style="background:#eaf7ef;border:1px solid #087443;color:#087443;font-weight:bold;">✅ All shops are fully stocked! No low-stock alerts.</div>`;
+    return;
+  }
+  container.innerHTML = `
+    <div class="card" style="background:#fff0ed;border:2px solid #b83232;">
+      <h3 style="color:#b83232;margin-top:0;">⚠️ GLOBAL LOW STOCK ALERT (${lowItems.length} items near out of stock)</h3>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr style="background:#fde8e4;">
+              <th>Shop</th>
+              <th>Product</th>
+              <th>Qty Left</th>
+              <th>Suggested Reorder Qty</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lowItems.map(item => {
+              const shop = (shops || []).find(s => s.id === item.shop_id);
+              const shopName = shop ? shop.shop_name : (item.shops ? item.shops.shop_name : 'Shop #' + item.shop_id);
+              const suggestedOrder = Math.max(20 - Number(item.quantity), 10);
+              return `
+                <tr>
+                  <td><b>${shopName}</b></td>
+                  <td><b>${item.name}</b></td>
+                  <td style="color:#b83232;font-weight:bold;">${item.quantity} ${item.unit} ${item.unit==='bags'?'('+item.bag_weight+'kg)':''}</td>
+                  <td style="color:var(--green);font-weight:bold;">Order +${suggestedOrder} ${item.unit}</td>
+                  <td><span class="btn btn-red" style="padding:3px 8px;font-size:10px;cursor:default;">REORDER NEEDED</span></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 function doLogin(){
   const sel=document.getElementById('adminShop'); const opt=sel.options[sel.selectedIndex]; const p=document.getElementById('pass').value; const msg=document.getElementById('loginMsg');
   if(!opt || !opt.dataset){msg.innerText="Select shop first"; return;}
   const correct=opt.dataset.pass; const isAdm=opt.dataset.admin==='true'; const name=opt.dataset.name;
   if(!isAdm){msg.innerText="❌ This shop is NOT admin. Run SQL: UPDATE shops SET is_admin=true WHERE shop_name='Farmgate Feeds - Mwea'"; return;}
-  // Allow admin123 as fallback if password column empty
   if(correct && p!==correct && p!=='admin123'){msg.innerText="❌ Wrong password! Manucho cannot enter without correct password."; return;}
   if(!correct && p!=='admin123'){msg.innerText="❌ Wrong password. If shop has no password yet, use admin123"; return;}
   currentAdminShop={id:opt.value, name:name, password:correct||p};
@@ -172,13 +253,39 @@ async function loadAdmin(){
   const sales=await supa.from('sales').select('*').order('created_at',{ascending:false}).limit(300);
   const debts=await supa.from('customers').select('*').order('created_at',{ascending:false}).limit(300);
 
-  // Stats
+  // Render global low stock banner across all shops with Reorder Calculator
+  renderGlobalLowStock(prod.data || [], shopsQ.data || []);
+
+  // Stats & Payment Breakdown Calculation
   document.getElementById('sShops').innerText=shopsQ.data?shopsQ.data.length:0;
 
-  // Shops table
+  let totalMpesa = 0;
+  let totalCash = 0;
+  if(sales.data){
+    sales.data.forEach(r => {
+      const amt = Number(r.amount) || 0;
+      if (r.payment && r.payment.includes('M-PESA')) {
+        totalMpesa += amt;
+      } else if (r.payment && r.payment.includes('Cash')) {
+        totalCash += amt;
+      } else if (r.payment && r.payment.startsWith('Split')) {
+        const cashMatch = r.payment.match(/Cash:\s*([0-9.]+)/);
+        const mpesaMatch = r.payment.match(/M-PESA:\s*([0-9.]+)/);
+        if (cashMatch) totalCash += Number(cashMatch[1]);
+        if (mpesaMatch) totalMpesa += Number(mpesaMatch[1]);
+      }
+    });
+  }
+  document.getElementById('sMpesa').innerText = "KSh " + totalMpesa.toLocaleString('en-KE');
+  document.getElementById('sCash').innerText = "KSh " + totalCash.toLocaleString('en-KE');
+
+  // Shops table & Performance summary
   const shopsBody=document.getElementById('shopsBody');
-  if(shopsQ.error){shopsBody.innerHTML=`<tr><td colspan="8" style="color:red">${shopsQ.error.message} — Run SQL: ALTER TABLE shops ADD COLUMN password TEXT; ADD COLUMN is_admin BOOLEAN DEFAULT false; ADD COLUMN is_active BOOLEAN DEFAULT true;</td></tr>`;}
-  else {
+  const shopPerfBody=document.getElementById('shopPerformanceBody');
+  
+  if(shopsQ.error){
+    shopsBody.innerHTML=`<tr><td colspan="8" style="color:red">${shopsQ.error.message}</td></tr>`;
+  } else {
     const data=shopsQ.data;
     shopsBody.innerHTML=data.map(s=>`<tr>
       <td>#${s.id}</td>
@@ -190,6 +297,18 @@ async function loadAdmin(){
       <td>${s.is_active!==false?'✅':'❌'}</td>
       <td><button class="btn btn-white" onclick="toggleActive(${s.id},${s.is_active!==false})">${s.is_active!==false?'Deactivate':'Activate'}</button> <button class="btn btn-red" onclick="deleteShop(${s.id},'${s.shop_name.replace(/'/g,"")}')">Delete</button></td>
     </tr>`).join('')||`<tr><td colspan="8">No shops</td></tr>`;
+
+    // Shop Performance Summary Table
+    const salesData = sales.data || [];
+    shopPerfBody.innerHTML = data.map(shop => {
+      const shopSales = salesData.filter(s => s.shop_id === shop.id);
+      const revenue = shopSales.reduce((sum, s) => sum + Number(s.amount), 0);
+      return `<tr>
+        <td><b>${escapeHTML(shop.shop_name)}</b></td>
+        <td>${escapeHTML(shop.location || '-')}</td>
+        <td style="color:var(--green); font-weight:bold;">KSh ${revenue.toLocaleString('en-KE')}</td>
+      </tr>`;
+    }).join('');
   }
 
   const body=document.getElementById('adminBody'); const sBody=document.getElementById('salesBody'); const dBody=document.getElementById('debtsBody');
@@ -197,15 +316,74 @@ async function loadAdmin(){
     const data=prod.data; document.getElementById('sTotal').innerText=data.length; const val=data.reduce((s,p)=>s+Number(p.quantity)*Number(p.cost),0); document.getElementById('sValue').innerText="KSh "+val.toLocaleString('en-KE');
     body.innerHTML=data.map(r=>`<tr><td>${r.shops?r.shops.shop_name:'#'+(r.shop_id||'?')}</td><td><b>${r.name}</b></td><td>${r.category}</td><td>${r.quantity} ${r.unit} ${r.unit==='bags'?'('+r.bag_weight+'kg)':''}</td><td>KSh ${Number(r.cost).toLocaleString()}</td><td>KSh ${Number(r.price).toLocaleString()}</td><td><button class="btn btn-red" onclick="delProduct(${r.id})">Delete</button></td></tr>`).join('')||`<tr><td colspan="7">No products</td></tr>`;
   }
-  if(sales.error){sBody.innerHTML=`<tr><td colspan="7">${sales.error.message} — Run sales SQL</td></tr>`; document.getElementById('sSales').innerText="KSh 0";} else {
+  if(sales.error){sBody.innerHTML=`<tr><td colspan="7">${sales.error.message}</td></tr>`; document.getElementById('sSales').innerText="KSh 0";} else {
     const data=sales.data; const total=data.reduce((s,r)=>s+Number(r.amount),0); document.getElementById('sSales').innerText="KSh "+total.toLocaleString('en-KE');
     sBody.innerHTML=data.map(r=>`<tr><td>${new Date(r.created_at).toLocaleDateString()}</td><td>#${r.shop_id||'?'}</td><td>${r.product_name}</td><td>${r.quantity} ${r.unit}</td><td>KSh ${Number(r.amount).toLocaleString()}</td><td>${r.payment}</td><td><button class="btn btn-red" onclick="delSale(${r.id})">Delete</button></td></tr>`).join('')||`<tr><td colspan="7">No sales yet</td></tr>`;
   }
-  if(debts.error){dBody.innerHTML=`<tr><td colspan="5">${debts.error.message} — Run customers SQL</td></tr>`;} else {
+  if(debts.error){dBody.innerHTML=`<tr><td colspan="5">${debts.error.message}</td></tr>`;} else {
     const data=debts.data; const total=data.reduce((s,r)=>s+Number(r.amount),0); document.getElementById('sDebts').innerText="KSh "+total.toLocaleString('en-KE');
-    dBody.innerHTML=data.map(r=>`<tr><td><b>${r.name}</b></td><td>${r.phone||""}</td><td>#${r.shop_id||'?'}</td><td>KSh ${Number(r.amount).toLocaleString()}</td><td><button class="btn btn-red" onclick="delDebt(${r.id})">Delete</button></td></tr>`).join('')||`<tr><td colspan="5">No debts</td></tr>`;
+    dBody.innerHTML=data.map(r=>`<tr>
+      <td><b>${escapeHTML(r.name)}</b></td>
+      <td>${escapeHTML(r.phone||"")}</td>
+      <td>#${r.shop_id||'?'}</td>
+      <td style="color:var(--red); font-weight:bold;">KSh ${Number(r.amount).toLocaleString()}</td>
+      <td>
+        <button class="btn btn-green" onclick="settleDebt(${r.id}, ${r.amount})" style="padding:4px 8px; font-size:10px;">Clear Debt</button>
+        <button class="btn btn-red" onclick="delDebt(${r.id})" style="padding:4px 8px; font-size:10px;">Delete</button>
+      </td>
+    </tr>`).join('')||`<tr><td colspan="5">No debts</td></tr>`;
   }
 }
+
+// CSV Export Functions
+async function exportSalesToCSV() {
+  const { data } = await supa.from('sales').select('*').order('created_at', { ascending: false });
+  if (!data || !data.length) { alert("No sales to export"); return; }
+  let csv = "Date,Shop ID,Product,Qty,Unit,Amount,Payment\n";
+  data.forEach(s => {
+    csv += `"${new Date(s.created_at).toLocaleDateString()}","${s.shop_id || ''}","${s.product_name}","${s.quantity}","${s.unit}","${s.amount}","${s.payment}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `FeedTrack_Sales_${new Date().toISOString().slice(0,10)}.csv`;
+  link.click();
+}
+
+async function exportProductsToCSV() {
+  const { data } = await supa.from('products').select('*').order('created_at', { ascending: false });
+  if (!data || !data.length) { alert("No products to export"); return; }
+  let csv = "Shop ID,Product Name,Category,Quantity,Unit,Cost,Price\n";
+  data.forEach(p => {
+    csv += `"${p.shop_id}","${p.name}","${p.category}","${p.quantity}","${p.unit}","${p.cost}","${p.price}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `FeedTrack_Products_${new Date().toISOString().slice(0,10)}.csv`;
+  link.click();
+}
+
+// Debt Settlement Feature
+async function settleDebt(id, currentAmount) {
+  const paymentRecieved = prompt(`Customer is paying debt balance of KSh ${currentAmount}. Enter amount received:`, currentAmount);
+  if (paymentRecieved === null) return;
+  const paid = Number(paymentRecieved);
+  if (isNaN(paid) || paid <= 0) { alert("Invalid amount"); return; }
+
+  if (paid >= currentAmount) {
+    const { error } = await supa.from('customers').delete().eq('id', id);
+    if (error) alert(error.message);
+    else alert("✅ Debt fully cleared and removed!");
+  } else {
+    const newBalance = currentAmount - paid;
+    const { error } = await supa.from('customers').update({ amount: newBalance }).eq('id', id);
+    if (error) alert(error.message);
+    else alert(`✅ Partial payment recorded. Remaining balance: KSh ${newBalance}`);
+  }
+  loadAdmin();
+}
+
 async function delProduct(id){if(!confirm('Delete product?')) return; await supa.from('products').delete().eq('id',id); loadAdmin();}
 async function delSale(id){if(!confirm('Delete sale? Stock will NOT return.')) return; await supa.from('sales').delete().eq('id',id); loadAdmin();}
 async function delDebt(id){if(!confirm('Delete debt?')) return; await supa.from('customers').delete().eq('id',id); loadAdmin();}
@@ -215,10 +393,10 @@ async function deleteShop(id,name){ if(!confirm(`Delete shop ${name}? This remov
 // Reset password
 document.getElementById('doReset').addEventListener('click',async()=>{
   const id=document.getElementById('resetShop').value; const newPass=document.getElementById('newResetPass').value; const msg=document.getElementById('resetMsg');
-  if(!newPass||newPass.length<4){msg.textContent='❌ Min 4 chars — you can set any password freely, not 123 forced'; msg.style.color='#b83232'; return;}
+  if(!newPass||newPass.length<4){msg.textContent='❌ Min 4 chars — you can set any password freely'; msg.style.color='#b83232'; return;}
   msg.textContent='Saving...'; msg.style.color='#718278';
   const {error}=await supa.from('shops').update({password:newPass}).eq('id',id);
-  if(error){msg.textContent='❌ '+error.message; msg.style.color='#b83232';} else {msg.textContent='✅ Password reset to: '+newPass+' — user can login with this now (eye icon to see)'; msg.style.color='#087443'; loadAdmin();}
+  if(error){msg.textContent='❌ '+error.message; msg.style.color='#b83232';} else {msg.textContent='✅ Password reset to: '+newPass; msg.style.color='#087443'; loadAdmin();}
 });
 
 // Change admin password in settings
@@ -234,12 +412,13 @@ document.getElementById('saveNewPass').addEventListener('click',async()=>{
   if(data.password && data.password!==curr && curr!=='admin123'){msg.textContent='❌ Current password wrong'; msg.style.color='#b83232'; return;}
   const {error:upErr}=await supa.from('shops').update({password:newP}).eq('id',currentAdminShop.id);
   if(upErr){msg.textContent=upErr.message; msg.style.color='#b83232'; return;}
-  msg.textContent=`✅ Admin password changed! New: ${newP} — Manucho cannot enter without this. Use eye icon to verify.`;
+  msg.textContent=`✅ Admin password changed! New: ${newP}`;
   msg.style.color='#087443';
   currentAdminShop.password=newP;
   loadShopOptions();
 });
 
+const escapeHTML=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 loadShopOptions();
 </script>
 </body>
