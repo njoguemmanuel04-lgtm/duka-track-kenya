@@ -28,7 +28,45 @@ function toggleEye(btn){const id=btn.dataset.target;const input=document.getElem
 document.addEventListener('click',e=>{if(e.target.classList.contains('eyeBtn')) toggleEye(e.target);});
 function getShopFilterFromUrl(){try{const params=new URLSearchParams(window.location.search);let f=params.get('shop')||params.get('s');const parts=window.location.pathname.split('/').filter(Boolean);if(!f&&parts[0]==='shop'&&parts[1])f=parts[1];return f?f.toLowerCase().trim():null;}catch{return null}}
 async function fetchShops(){const {data,error}=await supa.from('shops').select('*').order('created_at',{ascending:true}).limit(100);if(error){document.getElementById('shopList').innerHTML=`<div style="padding:12px;color:#b83232">${escapeHTML(error.message)}</div>`;return [];}return data||[];}
-async function renderShopList(){let shops=await fetchShops();const filter=getShopFilterFromUrl();if(filter){const filtered=shops.filter(s=>{const name=(s.shop_name||'').toLowerCase();const loc=(s.location||'').toLowerCase();const idStr=String(s.id);return name.includes(filter)||loc.includes(filter)||idStr===filter||name.replace(/\s+/g,'').includes(filter);});if(filtered.length>0)shops=filtered;}const list=document.getElementById('shopList');if(!shops.length){if(filter){list.innerHTML=`<div style="padding:12px;color:var(--muted)">No shop found for private link: <strong>${escapeHTML(filter)}</strong><br>Use full list link.</div>`;}else{list.innerHTML='<div style="padding:12px;color:var(--muted)">No shops yet. Create first Agrovet shop.</div>';}return;}document.querySelectorAll('.private-hint').forEach(e=>e.remove());list.innerHTML=shops.map(s=>{const hasPass=s.password?'🔒':'🔓';const isDeactivated=s.is_active===false;const style=isDeactivated?'opacity:0.6;background:#fff0ed;border-left:4px solid #b83232':'';return `<div class="shopItem" data-id="${s.id}" data-name="${escapeHTML(s.shop_name)}" data-loc="${escapeHTML(s.location||'')}" data-pass="${escapeHTML(s.password||'')}" data-active="${s.is_active!==false}" data-admin="${s.is_admin?'true':'false'}" style="${style}"><span><strong>${hasPass} ${escapeHTML(s.shop_name)} ${s.is_admin?'👑':''} ${isDeactivated?'⛔':''}</strong><br><small style="color:${isDeactivated?'#b83232':'var(--muted)'}">${escapeHTML(s.location||'')} ${s.is_admin?'👑 SUPER':''} ${isDeactivated?'⛔ DEACTIVATED':''}</small></span><span style="color:${isDeactivated?'#b83232':'var(--green)'};font-weight:700">${isDeactivated?'BLOCKED':'Enter →'}</span></div>`;}).join('');if(filter&&shops.length===1){const hint=document.createElement('div');hint.className='private-hint';hint.style.cssText='padding:8px 12px;font-size:11px;background:#eaf7ef;color:#087443;border-radius:8px;margin-bottom:8px;border:1px solid #c2e8cf';hint.textContent=`🔒 Private link: Only ${shops[0].shop_name} is visible here. Phone hidden.`;list.parentNode.insertBefore(hint,list);}list.querySelectorAll('.shopItem').forEach(el=>{el.addEventListener('click',()=>{if(el.dataset.active==='false'){alert('⛔ SHOP DEACTIVATED! Contact Owner. Till: 0116982197');return;}const shop={id:Number(el.dataset.id),name:el.dataset.name,loc:el.dataset.loc,pass:el.dataset.pass,is_admin:el.dataset.admin==='true'};selectedShopToEnter=shop;document.getElementById('passShopName').textContent=`Enter password for ${shop.name} ${shop.is_admin?'👑 SUPER':''}`;document.getElementById('passSection').style.display='block';document.getElementById('enterPass').value='';document.getElementById('enterPass').type='password';const eye=document.querySelector('[data-target="enterPass"]');if(eye)eye.textContent='👁️';document.getElementById('passMsg').textContent='';document.getElementById('enterPass').focus();});});}
+async function renderShopList(){
+let shops=await fetchShops();
+const filter=getShopFilterFromUrl();
+if(filter){
+const filtered=shops.filter(s=>{
+const name=(s.shop_name||'').toLowerCase();
+const loc=(s.location||'').toLowerCase();
+const idStr=String(s.id);
+return name.includes(filter)||loc.includes(filter)||idStr===filter||name.replace(/\s+/g,'').includes(filter);
+});
+if(filtered.length>0)shops=filtered;
+}
+const list=document.getElementById('shopList');
+if(!shops.length){
+list.innerHTML='<div style="padding:12px;color:var(--muted)">No shops yet. Create first Agrovet shop.</div>';
+return;
+}
+list.innerHTML=shops.map(s=>{
+const hasPass=s.password?'🔒':'🔓';
+const isDeactivated=s.is_active===false;
+const style=isDeactivated?'opacity:0.6;background:#fff0ed;border-left:4px solid #b83232':'';
+return `<div class="shopItem" data-id="${s.id}" data-name="${escapeHTML(s.shop_name)}" data-loc="${escapeHTML(s.location||'')}" data-pass="${escapeHTML(s.password||'')}" data-active="${s.is_active!==false}" data-admin="${s.is_admin?'true':'false'}" style="${style}"><span><strong>${hasPass} ${escapeHTML(s.shop_name)} ${s.is_admin?'👑':''} ${isDeactivated?'⛔':''}</strong><br><small style="color:${isDeactivated?'#b83232':'var(--muted)'}">${escapeHTML(s.location||'')} ${s.is_admin?'👑 SUPER':''} ${isDeactivated?'⛔ DEACTIVATED':''}</small></span><span style="color:${isDeactivated?'#b83232':'var(--green)'};font-weight:700">${isDeactivated?'BLOCKED':'Enter →'}</span></div>`;
+}).join('');
+list.querySelectorAll('.shopItem').forEach(el=>{
+el.addEventListener('click',()=>{
+if(el.dataset.active==='false'){alert('⛔ SHOP DEACTIVATED! Contact Owner. Till: 0116982197');return;}
+const shop={id:Number(el.dataset.id),name:el.dataset.name,loc:el.dataset.loc,pass:el.dataset.pass,is_admin:el.dataset.admin==='true'};
+selectedShopToEnter=shop;
+document.getElementById('passShopName').textContent=`Enter password for ${shop.name} ${shop.is_admin?'👑 SUPER':''}`;
+document.getElementById('passSection').style.display='block';
+document.getElementById('enterPass').value='';
+document.getElementById('enterPass').type='password';
+const eye=document.querySelector('[data-target="enterPass"]');
+if(eye)eye.textContent='👁️';
+document.getElementById('passMsg').textContent='';
+document.getElementById('enterPass').focus();
+});
+});
+}
 function getSavedShop(){try{return JSON.parse(localStorage.getItem('farmgate_current_shop')||'null')}catch{return null}}
 function saveShop(shop){localStorage.setItem('farmgate_current_shop',JSON.stringify(shop))}
 async function loginToShop(id,name,loc,is_admin){const shop={id,name,location:loc,is_admin:!!is_admin};currentShop=shop;saveShop(shop);document.getElementById('loginOverlay').style.display='none';document.getElementById('passSection').style.display='none';document.getElementById('headerShopName').textContent=name;document.getElementById('headerShopShort').textContent=(loc||name).split(' ')[0];document.getElementById('headerSub').textContent=`Shop #${id} • ${loc||'Mwea'} • ${is_admin?'SUPER ADMIN':'CLIENT - Profit PIN Owner Only'} • LIVE`;await loadAll();}
