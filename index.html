@@ -59,9 +59,7 @@
             <h2 class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
                 <i class="fa-solid fa-shop text-emerald-600"></i> Registered Dukas
             </h2>
-            <div id="shopDirectoryList" class="space-y-2">
-                <p class="text-xs text-gray-400 italic py-2 text-center">Loading dukas...</p>
-            </div>
+            <div id="shopDirectoryList" class="space-y-2"></div>
         </div>
 
         <!-- CREATE NEW DUKA FORM -->
@@ -312,7 +310,7 @@
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
         } catch (e) {
-            console.warn("Supabase initialization skipped:", e);
+            console.warn("Supabase init error:", e);
         }
 
         let registeredShops = JSON.parse(localStorage.getItem('dukatrack_shops_list')) || [
@@ -329,26 +327,13 @@
             localStorage.setItem('dukatrack_shops_list', JSON.stringify(registeredShops));
         }
 
-        async function renderDirectory() {
+        // Synchronous immediate render to avoid hanging on network requests
+        function renderDirectoryHTML() {
             const listElem = document.getElementById('shopDirectoryList');
             if (!listElem) return;
-            
-            if (supabase) {
-                try {
-                    const { data: cloudDukas } = await supabase.from('dukas').select('*');
-                    if (cloudDukas && cloudDukas.length > 0) {
-                        cloudDukas.forEach(cd => {
-                            if (!registeredShops.some(s => s.id === cd.id)) {
-                                registeredShops.push({ id: cd.id, name: cd.name, phone: cd.phone, location: cd.location });
-                            }
-                        });
-                        saveShopsList();
-                    }
-                } catch(e) {}
-            }
 
             listElem.innerHTML = '';
-            if (registeredShops.length === 0) {
+            if (!registeredShops || registeredShops.length === 0) {
                 listElem.innerHTML = `<p class="text-xs text-gray-400 italic py-2 text-center">No dukas registered yet.</p>`;
                 return;
             }
@@ -370,6 +355,31 @@
             });
         }
 
+        async function fetchCloudShops() {
+            if (!supabase) return;
+            try {
+                const { data: cloudDukas, error } = await supabase.from('dukas').select('*');
+                if (!error && cloudDukas && cloudDukas.length > 0) {
+                    let updated = false;
+                    cloudDukas.forEach(cd => {
+                        if (!registeredShops.some(s => s.id === cd.id)) {
+                            registeredShops.push({ id: cd.id, name: cd.name, phone: cd.phone, location: cd.location });
+                            updated = true;
+                        }
+                    });
+                    if (updated) {
+                        saveShopsList();
+                        renderDirectoryHTML();
+                    }
+                }
+            } catch(e) {}
+        }
+
+        function renderDirectory() {
+            renderDirectoryHTML();
+            fetchCloudShops();
+        }
+
         async function handleCreateShop(event) {
             event.preventDefault();
             const nameInput = document.getElementById('newShopName');
@@ -387,19 +397,19 @@
             const shopId = 'duka_' + Date.now();
             const newShop = { id: shopId, name, phone, location, pin };
 
+            // Render instantly locally
             registeredShops.push(newShop);
             saveShopsList();
-            renderDirectory();
+            renderDirectoryHTML();
 
             nameInput.value = '';
             phoneInput.value = '';
             if (locInput) locInput.value = '';
             pinInput.value = '';
 
+            // Send to cloud asynchronously
             if (supabase) {
-                try {
-                    await supabase.from('dukas').insert([{ id: shopId, name, phone, location, pin }]);
-                } catch (e) {}
+                supabase.from('dukas').insert([{ id: shopId, name, phone, location, pin }]).then(() => {}).catch(() => {});
             }
 
             enterShop(shopId);
@@ -448,7 +458,7 @@
             const app = document.getElementById('view-app');
             if (app) app.classList.add('hidden');
             if (landing) landing.classList.remove('hidden');
-            renderDirectory();
+            renderDirectoryHTML();
         }
 
         function switchTab(tabName) {
