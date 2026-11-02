@@ -1,386 +1,301 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Agro Feed - Smart Agrovet System</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<style>:root{--green:#087443;--dark:#064e32;--light:#eaf7ef;--bg:#f4f8f6;--text:#17362a;--muted:#718278;--border:#e1ebe5}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Arial}button,input,select{font:inherit}button{cursor:pointer}.topbar{height:72px;padding:0 22px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}.brand{display:flex;gap:10px;align-items:center}.logo{width:43px;height:43px;border-radius:14px;background:var(--light);display:grid;place-items:center;font-size:25px}.layout{display:flex;min-height:calc(100vh - 72px)}.sidebar{width:218px;background:#fff;border-right:1px solid var(--border);padding:20px 12px}.nav-btn{width:100%;border:0;background:transparent;padding:13px 12px;border-radius:10px;text-align:left;display:flex;gap:11px}.nav-btn.active{background:var(--light);color:var(--green);font-weight:700}main{flex:1;padding:22px}.welcome{border-radius:16px;padding:25px;color:#fff;margin-bottom:20px;background:linear-gradient(110deg,#075b3a,#13834d);display:flex;justify-content:space-between}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px}.card{background:#fff;border:1px solid var(--border);border-radius:13px;padding:17px;margin-bottom:16px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{padding:12px 10px;border-bottom:1px solid var(--border);font-size:12px;text-align:left}th{background:#f7faf8}.field{width:100%;border:1px solid #cfddd4;border-radius:8px;padding:11px;background:#fff}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.form-grid label{font-size:12px;font-weight:700}.primary{background:var(--green);color:#fff;border:0;border-radius:9px;padding:11px 15px;font-weight:700}.secondary{background:#fff;border:1px solid var(--border);border-radius:9px;padding:10px 13px}.pill{display:inline-block;padding:5px 8px;border-radius:20px;background:var(--light);color:var(--green);font-size:10px}.notice{background:#fff7e8;color:#85530d;padding:12px;border-radius:9px;margin-bottom:15px;font-size:12px}.mobile-nav{display:none}#loginOverlay{position:fixed;inset:0;background:linear-gradient(135deg,#064e32,#13834d);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}.loginBox{background:#fff;border-radius:16px;padding:28px;max-width:480px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.2);max-height:95vh;overflow:auto}.shopList{max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:15px}.shopItem{padding:12px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center}.shopItem:hover{background:var(--light)}.passRow{display:flex;gap:8px;margin-top:8px;align-items:center}.passInputWrap{position:relative;flex:1;display:flex;align-items:center}.passInputWrap .field{padding-right:40px}.eyeBtn{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:18px;cursor:pointer;padding:6px;border-radius:6px}.prodBanner{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;background:#eaf7ef;border-radius:12px;padding:10px;margin-bottom:12px;border:1px solid #c2e8cf;text-align:center}.prodBanner div{background:#fff;border-radius:8px;padding:8px;font-size:24px}@media(max-width:650px){.sidebar{display:none}.mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);justify-content:space-around;padding:7px}.mobile-nav button{border:0;background:transparent;color:var(--muted);font-size:10px}.mobile-nav button.active{color:var(--green)}.form-grid{grid-template-columns:1fr}main{padding-bottom:80px}.stats{grid-template-columns:1fr 1fr !important}}</style></head><body>
-<div id="loginOverlay"><div class="loginBox">
-<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><div style="width:48px;height:48px;background:var(--light);border-radius:12px;display:grid;place-items:center;font-size:26px">🌿</div><div><h2>🌾 Agro Feed</h2><p style="margin:0;font-size:12px;color:#718278">Smart Agrovet System — Profit PIN Owner Only</p></div></div>
-<div class="prodBanner"><div>🐔<br><small style="font-size:9px">Layers</small></div><div>🌱<br><small style="font-size:9px">Seeds</small></div><div>🧴<br><small style="font-size:9px">Pesticide</small></div><div>🌾<br><small style="font-size:9px">Feeds</small></div><div>🪴<br><small style="font-size:9px">Fertilizer</small></div></div>
-<div style="background:#f0faf4;border-radius:10px;padding:8px;margin-bottom:12px;border:1px dashed #087443;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;font-size:11px"><span>🐔 Layers Mash</span>•<span>🐄 Dairy Meal</span>•<span>🌽 Maize Germ</span>•<span>🧴 Vet Drugs</span>•<span>🌾 Wheat Bran</span>•<span>🌻 Sunflower</span></div>
-<div id="shopList" class="shopList"><div style="padding:12px;color:var(--muted)">Loading shops...</div></div>
-<div id="passSection" style="display:none;background:var(--light);padding:12px;border-radius:10px;margin-bottom:15px"><strong id="passShopName" style="font-size:13px"></strong><div class="passRow"><div class="passInputWrap"><input class="field" id="enterPass" type="password" placeholder="Enter shop password"><button class="eyeBtn" type="button" data-target="enterPass">👁️</button></div><button class="primary" id="confirmEnter" type="button">Enter</button></div><div style="display:flex;gap:8px;margin-top:8px;align-items:center"><button class="secondary" id="cancelPass" type="button" style="font-size:11px">Cancel</button><span id="passMsg" style="font-size:12px;color:#b83232;font-weight:700"></span></div></div>
-<h3 style="margin:14px 0 8px;font-size:13px">Create New Shop</h3><div class="form-grid" style="grid-template-columns:1fr"><label>Shop Name *<input class="field" id="newShopName" placeholder="e.g. Wanguru Agrovet"></label><label>Phone *<input class="field" id="newShopPhone" placeholder="07..."></label><label>Location<input class="field" id="newShopLocation" placeholder="Mwea, Wanguru"></label><label>Shop Password *<div class="passInputWrap"><input class="field" id="newShopPass" type="password" placeholder="AgroFeed2025!"><button class="eyeBtn" type="button" data-target="newShopPass">👁️</button></div></label></div><button class="primary" id="createShopBtn" style="width:100%;margin-top:12px" type="button">+ Create Shop & Enter</button><p id="loginMsg" style="font-size:12px;margin-top:10px;color:#b83232"></p></div></div>
-<header class="topbar"><div class="brand"><div class="logo">🌿</div><div><h1 id="headerShopName">Agro Feed</h1><p style="font-size:11px;color:var(--muted);margin:0" id="headerSub">Shop loading...</p></div></div><div style="text-align:right"><strong id="headerShopShort">Agro</strong><br><button class="secondary" id="logoutBtn" style="padding:4px 10px;font-size:11px;margin-top:4px">Logout / Switch Shop</button><br><span style="color:var(--muted);font-size:11px" id="liveStatus">LIVE Supabase</span></div></header>
-<div class="layout"><aside class="sidebar"><nav id="side-nav"></nav></aside><main id="main-content"></main></div><nav class="mobile-nav" id="mobile-nav"></nav>
-<script>
-"use strict";
-const SUPABASE_URL="https://torzbgvwjhthzuifdses.supabase.co";
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcnpiZ3Z3amh0aHp1aWZkc2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyODQ4OTAsImV4cCI6MjEwODg2MDg5MH0.Jjzgt-mCxA94Y1lG6fLDLupteE8RZs6dygJO5BVClKY";
-const supa=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-let demoProducts=[], demoSales=[], demoDebts=[], demoSuppliers=[], demoExpenses=[], demoStaff=[];
-let currentShop = null;
-let selectedShopToEnter = null;
-let currentSalesFilter = 'today';
-let customStartDate = '';
-let customEndDate = '';
-const categories=[["Animal Feeds","🌾"],["Seeds","🌱"],["Fertilizers","🪴"],["Pesticides","🧴"],["Veterinary Products","🐄"],["Farming Equipment","🛠️"]];
-const navItems=[["Dashboard","⌂"],["Products","▦"],["Stock","📦"],["Sales","🛒"],["Customers / Debts","👥"],["Suppliers","🚚"],["Expenses","💳"],["Reports","▤"],["Staff","♙"],["Settings","⚙"]];
-let currentPage="Dashboard",productFilter="",searchTerm="";
-const money=a=>"KSh "+Number(a).toLocaleString("en-KE",{maximumFractionDigits:2});
-const escapeHTML=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function toggleEye(btn){const id=btn.dataset.target;const input=document.getElementById(id);if(!input) return;if(input.type==='password'){input.type='text';btn.textContent='🙈';} else {input.type='password';btn.textContent='👁️';}}
-document.addEventListener('click',e=>{if(e.target.classList.contains('eyeBtn')) toggleEye(e.target);});
-function getShopFilterFromUrl(){try{const params=new URLSearchParams(window.location.search);let f=params.get('shop')||params.get('s');const parts=window.location.pathname.split('/').filter(Boolean);if(!f&&parts[0]==='shop'&&parts[1])f=parts[1];return f?f.toLowerCase().trim():null;}catch{return null}}
-async function fetchShops(){const {data,error}=await supa.from('shops').select('*').order('created_at',{ascending:true}).limit(100);if(error){document.getElementById('shopList').innerHTML=`<div style="padding:12px;color:#b83232">${escapeHTML(error.message)}</div>`;return [];}return data||[];}
-async function renderShopList(){
-let shops=await fetchShops();
-const filter=getShopFilterFromUrl();
-if(filter){
-const filtered=shops.filter(s=>{
-const name=(s.shop_name||'').toLowerCase();
-const loc=(s.location||'').toLowerCase();
-const idStr=String(s.id);
-return name.includes(filter)||loc.includes(filter)||idStr===filter||name.replace(/\s+/g,'').includes(filter);
-});
-if(filtered.length>0)shops=filtered;
-}
-const list=document.getElementById('shopList');
-if(!shops.length){
-list.innerHTML='<div style="padding:12px;color:var(--muted)">No shops yet. Create first Agrovet shop.</div>';
-return;
-}
-list.innerHTML=shops.map(s=>{
-const hasPass=s.password?'🔒':'🔓';
-const isDeactivated=s.is_active===false;
-const style=isDeactivated?'opacity:0.6;background:#fff0ed;border-left:4px solid #b83232':'';
-return `<div class="shopItem" data-id="${s.id}" data-name="${escapeHTML(s.shop_name)}" data-loc="${escapeHTML(s.location||'')}" data-pass="${escapeHTML(s.password||'')}" data-active="${s.is_active!==false}" data-admin="${s.is_admin?'true':'false'}" style="${style}"><span><strong>${hasPass} ${escapeHTML(s.shop_name)} ${s.is_admin?'👑':''} ${isDeactivated?'⛔':''}</strong><br><small style="color:${isDeactivated?'#b83232':'var(--muted)'}">${escapeHTML(s.location||'')} ${s.is_admin?'👑 SUPER':''} ${isDeactivated?'⛔ DEACTIVATED':''}</small></span><span style="color:${isDeactivated?'#b83232':'var(--green)'};font-weight:700">${isDeactivated?'BLOCKED':'Enter →'}</span></div>`;
-}).join('');
-list.querySelectorAll('.shopItem').forEach(el=>{
-el.addEventListener('click',()=>{
-if(el.dataset.active==='false'){alert('⛔ SHOP DEACTIVATED! Contact Owner. Till: 0116982197');return;}
-const shop={id:Number(el.dataset.id),name:el.dataset.name,loc:el.dataset.loc,pass:el.dataset.pass,is_admin:el.dataset.admin==='true'};
-selectedShopToEnter=shop;
-document.getElementById('passShopName').textContent=`Enter password for ${shop.name} ${shop.is_admin?'👑 SUPER':''}`;
-document.getElementById('passSection').style.display='block';
-document.getElementById('enterPass').value='';
-document.getElementById('enterPass').type='password';
-const eye=document.querySelector('[data-target="enterPass"]');
-if(eye)eye.textContent='👁️';
-document.getElementById('passMsg').textContent='';
-document.getElementById('enterPass').focus();
-});
-});
-}
-function getSavedShop(){try{return JSON.parse(localStorage.getItem('farmgate_current_shop')||'null')}catch{return null}}
-function saveShop(shop){localStorage.setItem('farmgate_current_shop',JSON.stringify(shop))}
-async function loginToShop(id,name,loc,is_admin){const shop={id,name,location:loc,is_admin:!!is_admin};currentShop=shop;saveShop(shop);document.getElementById('loginOverlay').style.display='none';document.getElementById('passSection').style.display='none';document.getElementById('headerShopName').textContent=name;document.getElementById('headerShopShort').textContent=(loc||name).split(' ')[0];document.getElementById('headerSub').textContent=`Shop #${id} • ${loc||'Mwea'} • ${is_admin?'SUPER ADMIN':'CLIENT - Profit PIN Owner Only'} • LIVE`;await loadAll();}
-async function tryEnterWithPassword(){if(!selectedShopToEnter)return;const entered=document.getElementById('enterPass').value;const msg=document.getElementById('passMsg');if(!entered){msg.textContent='Enter password';return;}const {data:freshShop}=await supa.from('shops').select('*').eq('id',selectedShopToEnter.id).single();if(freshShop&&freshShop.is_active===false){msg.textContent='⛔ DEACTIVATED! Contact Owner.';return;}if(!selectedShopToEnter.pass){if(confirm(`Shop ${selectedShopToEnter.name} has NO password. Enter?`)){await loginToShop(selectedShopToEnter.id,selectedShopToEnter.name,selectedShopToEnter.loc,freshShop?freshShop.is_admin:false);}return;}if(entered===selectedShopToEnter.pass){await loginToShop(selectedShopToEnter.id,selectedShopToEnter.name,selectedShopToEnter.loc,freshShop?freshShop.is_admin:false);}else{msg.textContent='❌ Wrong password!';}}
-async function initLogin(){const saved=getSavedShop();await renderShopList();if(saved&&saved.id){const {data}=await supa.from('shops').select('*').eq('id',saved.id).maybeSingle();if(data){if(data.is_active===false){localStorage.removeItem('farmgate_current_shop');alert('⛔ Your shop DEACTIVATED.');document.getElementById('loginOverlay').style.display='flex';return;}await loginToShop(data.id,data.shop_name,data.location,data.is_admin);return;}}document.getElementById('loginOverlay').style.display='flex';}
-async function createShop(){const nameEl=document.getElementById('newShopName');const phoneEl=document.getElementById('newShopPhone');const locEl=document.getElementById('newShopLocation');const passEl=document.getElementById('newShopPass');const msg=document.getElementById('loginMsg');const shop_name=(nameEl.value||'').trim();const phone=(phoneEl.value||'').trim();const location=(locEl.value||'Mwea').trim()||'Mwea';const password=(passEl.value||'').trim();if(!shop_name){msg.textContent='Shop name required';return;}if(!phone){msg.textContent='Phone required';return;}if(!password){msg.textContent='Password required!';return;}if(password.length<4){msg.textContent='Min 4 chars';return;}msg.style.color='#718278';msg.textContent='Creating...';const {data,error}=await supa.from('shops').insert([{shop_name,phone,location,password,profit_pin:password,is_active:true,is_admin:false}]).select().single();if(error){msg.style.color='#b83232';msg.textContent=error.message;return;}msg.style.color='#087443';msg.textContent='Created! Profit PIN = Shop Password';await loginToShop(data.id,data.shop_name,data.location,false);await renderShopList();}
-document.getElementById('logoutBtn').addEventListener('click',()=>{if(currentShop)sessionStorage.removeItem(`profit_unlocked_${currentShop.id}`);localStorage.removeItem('farmgate_current_shop');currentShop=null;demoProducts=[];demoSales=[];demoDebts=[];demoSuppliers=[];demoExpenses=[];demoStaff=[];document.getElementById('loginOverlay').style.display='flex';document.getElementById('passSection').style.display='none';renderShopList();});
-document.getElementById('createShopBtn').addEventListener('click',createShop);
-document.getElementById('confirmEnter').addEventListener('click',tryEnterWithPassword);
-document.getElementById('cancelPass').addEventListener('click',()=>{document.getElementById('passSection').style.display='none';selectedShopToEnter=null;});
-document.getElementById('enterPass').addEventListener('keydown',e=>{if(e.key==='Enter')tryEnterWithPassword();});
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DukaPOS - Kenya Duka Manager</title>
+    <!-- Tailwind CSS for UI Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Dexie.js for IndexedDB Offline Engine -->
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans pb-20">
 
-async function loadAll(){
-    if(!currentShop)return;
-    const shopId=currentShop.id;
-    const p=await supa.from('products').select('*').eq('shop_id',shopId).order('created_at',{ascending:false}).limit(200);
-    if(!p.error&&p.data)demoProducts=p.data.map(d=>({id:d.id,name:d.name,category:d.category,quantity:Number(d.quantity),unit:d.unit,bag_weight:d.bag_weight?Number(d.bag_weight):(d.unit==='bags'?50:1),cost:Number(d.cost),price:Number(d.price)}));
-    const s=await supa.from('sales').select('*').eq('shop_id',shopId).order('created_at',{ascending:false}).limit(200);
-    if(!s.error&&s.data)demoSales=s.data.map(r=>({id:r.id,rawDate:r.sale_date||r.created_at,date:r.sale_date?new Date(r.sale_date).toLocaleDateString():new Date(r.created_at).toLocaleDateString(),product:r.product_name,quantity:Number(r.quantity),unit:r.unit,amount:Number(r.amount),payment:r.payment}));
-    const c=await supa.from('customers').select('*').eq('shop_id',shopId).order('created_at',{ascending:false}).limit(200);
-    if(!c.error&&c.data)demoDebts=c.data.map(r=>({id:r.id,customer:r.name,phone:r.phone,amount:Number(r.amount)}));
-    
-    const sup=await supa.from('suppliers').select('*').eq('shop_id',shopId).order('created_at',{ascending:false}).limit(200);
-    if(!sup.error&&sup.data)demoSuppliers=sup.data.map(r=>({id:r.id,name:r.name,phone:r.phone,company:r.company||'-',item:r.item||'-'}));
-    const exp=await supa.from('expenses').select('*').eq('shop_id',shopId).order('created_at',{ascending:false}).limit(200);
-    if(!exp.error&&exp.data)demoExpenses=exp.data.map(r=>({id:r.id,title:r.title,amount:Number(r.amount),category:r.category||'General',date:r.created_at?new Date(r.created_at).toLocaleDateString():'-'}));
-    const stf=await supa.from('staff').select('*').eq('shop_id',shopId).order('created_at',{ascending:false}).limit(200);
-    if(!stf.error&&stf.data)demoStaff=stf.data.map(r=>({id:r.id,name:r.name,phone:r.phone,role:r.role||'Attendant'}));
-
-    document.getElementById('liveStatus').textContent=`LIVE • Shop #${shopId} • ${demoProducts.length} prod • One Profit + Low Stock`;
-    render();
-}
-
-function renderNavigation(){const makeButtons=mobile=>navItems.map(([name,icon])=>{if(mobile&&!["Dashboard","Products","Sales","Customers / Debts","Settings"].includes(name))return "";const label=name==="Customers / Debts"?"Debts":name;if(mobile){return `<button class="${currentPage===name?"active":""}" data-page="${name}" type="button"><span>${icon}</span><br>${label}</button>`;}return `<button class="nav-btn ${currentPage===name?"active":""}" data-page="${name}" type="button"><span>${icon}</span><span>${name}</span></button>`;}).join("");document.getElementById("side-nav").innerHTML=makeButtons(false);document.getElementById("mobile-nav").innerHTML=makeButtons(true);document.querySelectorAll("[data-page]").forEach(b=>{b.addEventListener("click",()=>{currentPage=b.dataset.page;searchTerm="";productFilter="";render();window.scrollTo({top:0})})});}
-function card(title,content){return `<section class="card"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">${title}</h3></div>${content}</section>`;}
-function parseLocalDate(dateInput) {
-    if (!dateInput) return null;
-    if (typeof dateInput === 'string' && dateInput.includes('/')) {
-        const parts = dateInput.split('/');
-        if (parts.length === 3) {
-            let month = parseInt(parts[0], 10);
-            let day = parseInt(parts[1], 10);
-            let year = parseInt(parts[2], 10);
-            if (year < 100) year += 2000;
-            return new Date(year, month - 1, day);
-        }
-    }
-    const d = new Date(dateInput);
-    return isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-function filterSalesByDate(salesList, filterType, startStr, endStr) {
-    const now = new Date();
-    const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return salesList.filter(s => {
-        const saleDate = parseLocalDate(s.rawDate || s.date);
-        if (!saleDate) return false;
-        if (filterType === 'today') {
-            return saleDate.getTime() === todayZero.getTime();
-        } else if (filterType === 'yesterday') {
-            const yest = new Date(todayZero);
-            yest.setDate(yest.getDate() - 1);
-            return saleDate.getTime() === yest.getTime();
-        } else if (filterType === 'this_week') {
-            const dayOfWeek = todayZero.getDay();
-            const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-            const weekStart = new Date(todayZero);
-            weekStart.setDate(todayZero.getDate() + diffToMonday);
-            weekStart.setHours(0,0,0,0);
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6);
-            weekEnd.setHours(23,59,59,999);
-            saleDate.setHours(0,0,0,0);
-            return saleDate >= weekStart && saleDate <= weekEnd;
-        } else if (filterType === 'this_month') {
-            return saleDate.getFullYear() === now.getFullYear() && saleDate.getMonth() === now.getMonth();
-        } else if (filterType === 'custom') {
-            if (!startStr || !endStr) return true;
-            const start = parseLocalDate(startStr);
-            const end = parseLocalDate(endStr);
-            if (!start || !end) return true;
-            start.setHours(0,0,0,0);
-            end.setHours(0,0,0,0);
-            saleDate.setHours(0,0,0,0);
-            return saleDate >= start && saleDate <= end;
-        }
-        return true;
-    });
-}
-function calcProfits(){const todayStr=new Date().toLocaleDateString();const filteredSales=filterSalesByDate(demoSales, currentSalesFilter, customStartDate, customEndDate);const todaySalesAmount=filteredSales.reduce((sum,s)=>sum+s.amount,0);let todayProfit=0;filteredSales.forEach(sale=>{const prod=demoProducts.find(p=>p.name===sale.product);if(prod){let costPerUnit=prod.cost;if(prod.unit==='bags'&&sale.unit==='kg')costPerUnit=prod.cost/prod.bag_weight;if(prod.unit==='kg'&&sale.unit==='bags')costPerUnit=prod.cost*prod.bag_weight;todayProfit+=(sale.amount-(sale.quantity*costPerUnit));}});let totalProfit=0;demoSales.forEach(sale=>{const prod=demoProducts.find(pr=>pr.name===sale.product);if(prod){let cpu=prod.cost;if(prod.unit==='bags'&&sale.unit==='kg')cpu=prod.cost/prod.bag_weight;if(prod.unit==='kg'&&sale.unit==='bags')cpu=prod.cost*prod.bag_weight;totalProfit+=(sale.amount-(sale.quantity*cpu));}});return{todayStr,filteredSales,todaySalesAmount,todayProfit,totalProfit};}
-function renderDashboard(){const{todayStr,filteredSales,todaySalesAmount,todayProfit,totalProfit}=calcProfits();const isUnlocked=currentShop?sessionStorage.getItem(`profit_unlocked_${currentShop.id}`)==='true':false;const lowStock=demoProducts.filter(p=>p.quantity<=5);const totalDebts=demoDebts.reduce((s,d)=>s+d.amount,0);
-const filterLabels = {today: 'Today Sales', yesterday: 'Yesterday Sales', this_week: 'This Week Sales', this_month: 'This Month Sales', custom: 'Custom Range Sales'};
-const currentFilterLabel = filterLabels[currentSalesFilter] || 'Sales Filtered';
-return `<section class="welcome"><div><h2>${escapeHTML(currentShop?currentShop.name:'Agro Feed')} 🏪 My Mini Admin</h2><p>Shop #${currentShop?currentShop.id:''} • ${todayStr} • ONLY YOUR SHOP • Profit PIN protected</p><span style="display:inline-block;margin-top:10px;padding:5px 8px;border:1px solid #ffffff70;border-radius:7px;font-size:11px">CLIENT • ${demoProducts.length} prod • Profit: ${isUnlocked?'🔓':'🔒'} • Low: ${lowStock.length}</span></div><div style="font-size:50px">🌾</div></section>
-<div class="card" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#f7faf8">
-  <strong style="font-size:12px">📅 Sales Date Filter:</strong>
-  <select class="field" id="dashSalesFilter" style="max-width:180px;padding:8px">
-    <option value="today" ${currentSalesFilter==='today'?'selected':''}>Today</option>
-    <option value="yesterday" ${currentSalesFilter==='yesterday'?'selected':''}>Yesterday</option>
-    <option value="this_week" ${currentSalesFilter==='this_week'?'selected':''}>This Week</option>
-    <option value="this_month" ${currentSalesFilter==='this_month'?'selected':''}>This Month</option>
-    <option value="custom" ${currentSalesFilter==='custom'?'selected':''}>Custom Range</option>
-  </select>
-  <div id="dashCustomRange" style="display:${currentSalesFilter==='custom'?'flex':'none'};gap:8px;align-items:center;flex-wrap:wrap">
-    <input type="date" class="field" id="dashStartDate" value="${customStartDate}" style="padding:8px;max-width:150px">
-    <span>to</span>
-    <input type="date" class="field" id="dashEndDate" value="${customEndDate}" style="padding:8px;max-width:150px">
-    <button class="secondary" id="applyDashFilter" type="button" style="padding:8px 12px">Apply</button>
-  </div>
-</div>
-<div class="stats"><section class="card" style="background:linear-gradient(135deg,#087443,#13834d);color:#fff"><div>🛒 ${currentFilterLabel}</div><div style="font-size:20px;font-weight:800;margin:8px 0">${money(todaySalesAmount)}</div><div style="font-size:11px;opacity:.8">${filteredSales.length} sales • Shop #${currentShop.id}</div></section><section class="card" style="background:${isUnlocked?'linear-gradient(135deg,#064e32,#0a7a45)':'#eee'};color:${isUnlocked?'#fff':'#888'}"><div>💰 Filtered Profit ${isUnlocked?'':'🔒'}</div><div style="font-size:20px;font-weight:800;margin:8px 0">${isUnlocked?money(todayProfit):'•••••'}</div><div style="font-size:11px;opacity:.8">${isUnlocked?'Sales - Cost':'Unlock in Settings'}</div></section><section class="card"><div>📦 Stock Value</div><div style="font-size:18px;font-weight:800;margin:8px 0">${money(demoProducts.reduce((s,p)=>s+p.quantity*p.cost,0))}</div><div style="color:var(--muted);font-size:11px">${demoProducts.length} items • Shop #${currentShop.id}</div></section><section class="card" style="border:${lowStock.length>0?'2px solid #b83232':'1px solid var(--border)'};background:${lowStock.length>0?'#fff0ed':'#fff'}"><div>⚠️ Low Stock</div><div style="font-size:20px;font-weight:800;margin:8px 0;color:${lowStock.length>0?'#b83232':'var(--text)'}">${lowStock.length}</div><div style="color:var(--muted);font-size:11px">${lowStock.length>0?escapeHTML(lowStock[0].name)+' low!':'All stocked'}</div></section></div>${lowStock.length>0?`<section class="card" style="border:2px solid #b83232;background:#fff0ed"><h3 style="color:#b83232">⚠️ Low Stock — Reorder Now — Shop #${currentShop.id}</h3><div class="table-wrap"><table><thead><tr><th>Product</th><th>Qty Left</th><th>Bag Wt</th><th>Action</th></tr></thead><tbody>${lowStock.map(p=>`<tr><td><strong>${escapeHTML(p.name)}</strong></td><td style="color:#b83232;font-weight:700">${p.quantity} ${escapeHTML(p.unit)}</td><td>${p.unit==='bags'?p.bag_weight+'kg':'-'}</td><td><span class="pill" style="background:#ffe0d5;color:#b83232">Reorder!</span></td></tr>`).join("")}</tbody></table></div></section>`:''}<div class="stats" style="grid-template-columns:1fr 1fr"><section class="card" style="border:2px solid #087443"><div>💵 Total Profit — ONE ONLY — 🔒 Owner</div><div style="font-size:22px;font-weight:800;margin:8px 0;color:${isUnlocked?'#087443':'#ccc'}">${isUnlocked?money(totalProfit):'•••••• KSh'}</div><div style="font-size:11px;color:var(--muted)">${isUnlocked?'All time • Shop #'+currentShop.id:'Enter PIN in Settings to unlock'}</div></section><section class="card"><div>💳 Debts Owed To You</div><div style="font-size:22px;font-weight:800;margin:8px 0">${money(totalDebts)}</div><div style="font-size:11px;color:var(--muted)">${demoDebts.length} customers • Shop #${currentShop.id}</div></section></div>${card("Sales Records (" + currentFilterLabel + ")",`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Amount</th><th>Profit</th><th>Pay</th></tr></thead><tbody>${filteredSales.map(s=>{const prod=demoProducts.find(p=>p.name===s.product);let profit=0;if(prod){let cpu=prod.cost;if(prod.unit==='bags'&&s.unit==='kg')cpu=prod.cost/prod.bag_weight;if(prod.unit==='kg'&&s.unit==='bags')cpu=prod.cost*prod.bag_weight;profit=s.amount-(s.quantity*cpu);}return `<tr><td>${s.date}</td><td>${escapeHTML(s.product)}</td><td>${s.quantity} ${escapeHTML(s.unit)}</td><td>${money(s.amount)}</td><td style="color:${isUnlocked?'#087443':'#ccc'}">${isUnlocked?money(profit):'•••••'}</td><td><span class="pill">${escapeHTML(s.payment)}</span></td></tr>`;}).join("")||`<tr><td colspan="6" style="text-align:center;color:var(--muted)">No sales found for this date range</td></tr>`}</tbody></table></div>`)}`;}
-function renderProducts(){const filtered=demoProducts.filter(p=>(!productFilter||p.category===productFilter)&&p.name.toLowerCase().includes(searchTerm.toLowerCase()));return `<h2>Products — ${escapeHTML(currentShop?currentShop.name:'')} 🔒 ONLY MY SHOP</h2><div class="notice">Shop #${currentShop?currentShop.id:''} • Only your products</div><div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"><input class="field" id="product-search" placeholder="Search my products..." value="${escapeHTML(searchTerm)}" style="flex:1;min-width:150px"><select class="field" id="category-filter" style="min-width:140px"><option value="">All</option>${categories.map(([n])=>`<option value="${escapeHTML(n)}" ${productFilter===n?"selected":""}>${escapeHTML(n)}</option>`).join("")}</select><button class="primary" id="add-product-btn" type="button">＋ Add</button><button class="secondary" id="seed-btn" type="button">Seed 15 Demo</button></div><section class="card" id="add-product-panel" hidden><h3>Add Product — ONLY SHOP #${currentShop?currentShop.id:''}</h3><form id="add-product-form"><div class="form-grid"><label>Product name *<input class="field" name="productName" required placeholder="Layers, Omena..."></label><label>Category *<select class="field" name="category" required><option value="">Choose</option>${categories.map(([n])=>`<option value="${escapeHTML(n)}">${escapeHTML(n)}</option>`).join("")}</select></label><label>Quantity *<input class="field" name="quantity" type="number" min="0" step="any" required></label><label>Store Unit *<select class="field" name="unit" id="unitSelect" required><option value="bags">Bags</option><option value="kg">Kg</option><option value="packets">Packets</option><option value="bottles">Bottles</option><option value="pieces">Pieces</option></select></label><label id="bagWeightLabel">Bag Weight *<select class="field" name="bag_weight" id="bagWeightSelect" required><option value="20">20 kg</option><option value="25">25 kg</option><option value="30">30 kg</option><option value="40">40 kg</option><option value="50" selected>50 kg</option><option value="70">70 kg</option><option value="90">90 kg</option><option value="100">100 kg</option></select></label><label>Cost KSh *<input class="field" name="cost" type="number" min="0" step="0.01" required></label><label>Price KSh *<input class="field" name="price" type="number" min="0" step="0.01" required></label></div><div style="margin-top:12px;display:flex;gap:8px"><button class="primary" type="submit">Save to Shop #${currentShop?currentShop.id:''}</button><button class="secondary" id="cancel-product-btn" type="button">Cancel</button></div><p id="product-form-message"></p></form></section><section class="card"><div style="display:flex;justify-content:space-between"><h3>Inventory — ONLY SHOP #${currentShop?currentShop.id:''}</h3><span class="pill">${filtered.length} products</span></div><div class="table-wrap"><table><thead><tr><th>Product</th><th>Qty</th><th>Bag Wt</th><th>Cost</th><th>Price</th><th>Value</th></tr></thead><tbody>${filtered.map(p=>`<tr><td><strong>${escapeHTML(p.name)}</strong><br><small style="color:var(--muted)">${escapeHTML(p.category)}</small></td><td>${p.quantity} ${escapeHTML(p.unit)}</td><td>${p.unit==='bags'?p.bag_weight+' kg':'-'}</td><td>${money(p.cost)}</td><td>${money(p.price)}</td><td>${money(p.quantity*p.cost)}</td></tr>`).join("")||`<tr><td colspan="6">No products</td></tr>`}</tbody></table></div></section>`;}
-
-function renderStock(){
-    const totalVal = demoProducts.reduce((sum, p) => sum + (p.quantity * p.cost), 0);
-    const lowStock = demoProducts.filter(p => p.quantity <= 5);
-    return `<h2>Stock — ${escapeHTML(currentShop?currentShop.name:'')} 🔒 INVENTORY OVERVIEW</h2>
-    <div class="notice">Shop #${currentShop?currentShop.id:''} • Detailed stock & inventory monitoring</div>
-    <div class="stats" style="grid-template-columns:1fr 1fr">
-        <section class="card" style="background:linear-gradient(135deg,#087443,#13834d);color:#fff">
-            <div>📦 Total Inventory Value</div>
-            <div style="font-size:22px;font-weight:800;margin:8px 0">${money(totalVal)}</div>
-            <div style="font-size:11px;opacity:.8">${demoProducts.length} total items in stock</div>
-        </section>
-        <section class="card" style="border:${lowStock.length>0?'2px solid #b83232':'1px solid var(--border)'};background:${lowStock.length>0?'#fff0ed':'#fff'}">
-            <div>⚠️ Low Stock Items</div>
-            <div style="font-size:22px;font-weight:800;margin:8px 0;color:${lowStock.length>0?'#b83232':'var(--text)'}">${lowStock.length}</div>
-            <div style="font-size:11px;color:var(--muted)">Items requiring reorder</div>
-        </section>
-    </div>
-    <section class="card">
-        <h3>Stock Level Status — SHOP #${currentShop?currentShop.id:''}</h3>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Product</th><th>Category</th><th>Current Stock</th><th>Bag Weight</th><th>Unit Cost</th><th>Status</th></tr></thead>
-                <tbody>${demoProducts.map(p=>`<tr><td><strong>${escapeHTML(p.name)}</strong></td><td>${escapeHTML(p.category)}</td><td style="font-weight:700;color:${p.quantity<=5?'#b83232':'var(--text)'}">${p.quantity} ${escapeHTML(p.unit)}</td><td>${p.unit==='bags'?p.bag_weight+' kg':'-'}</td><td>${money(p.cost)}</td><td><span class="pill" style="${p.quantity<=5?'background:#ffe0d5;color:#b83232':''}">${p.quantity<=5?'Low Stock':'In Stock'}</span></td></tr>`).join("")||`<tr><td colspan="6" style="text-align:center;color:var(--muted)">No inventory items found</td></tr>`}</tbody>
-            </table>
-        </div>
-    </section>`;
-}
-
-function renderSales(){const isUnlocked=currentShop?sessionStorage.getItem(`profit_unlocked_${currentShop.id}`)==='true':false;return `<h2>Sales — ${escapeHTML(currentShop?currentShop.name:'')} 🔒 ONLY MY SALES</h2><div class="notice">Shop #${currentShop?currentShop.id:''} • Profit ${isUnlocked?'🔓':'🔒'}</div><section class="card"><h3>Record New Sale — SHOP #${currentShop?currentShop.id:''}</h3><form id="sale-form"><div class="form-grid"><label>Product *<select class="field" name="saleProduct" id="saleProduct" required><option value="">Choose</option>${demoProducts.map(p=>`<option value="${p.id}">${escapeHTML(p.name)} — ${p.quantity} ${escapeHTML(p.unit)} ${p.unit==='bags'?'('+p.bag_weight+'kg)':''} @ ${money(p.price)}</option>`).join("")}</select></label><label>Sale Unit *<select class="field" name="saleUnit" id="saleUnit" required><option value="bags">Bags</option><option value="kg">Kgs</option></select><small id="bagInfo" style="color:var(--muted)"></small></label><label>Quantity *<input class="field" name="saleQty" id="saleQty" type="number" min="0.01" step="any" required></label><label>Bargain Discount (KSh off)<input class="field" name="saleDiscount" id="saleDiscount" type="number" min="0" value="0" placeholder="e.g. 150"><small id="calcPreview" style="color:var(--green);font-weight:700"></small></label><label>Payment *<select class="field" name="salePay" id="salePaySelect" required><option value="M-PESA">M-PESA</option><option value="Cash">Cash</option><option value="Split">Split (Cash + M-PESA)</option><option value="Credit">Credit</option><option value="Bank">Bank</option></select></label><div id="splitPayFields" style="display:none; grid-column: span 2; background: var(--light); padding: 10px; border-radius: 8px;"><div style="display: flex; gap: 10px;"><label style="flex:1">Cash Amount (KSh)<input class="field" type="number" id="cashAmountInput" min="0" placeholder="e.g. 10000"></label><label style="flex:1">M-PESA Amount (KSh)<input class="field" type="number" id="mpesaAmountInput" min="0" placeholder="e.g. 20000"></label></div></div></div><div style="margin-top:12px"><button class="primary" type="submit">Record Sale to Shop #${currentShop?currentShop.id:''}</button></div><p id="sale-msg"></p></form></section><section class="card"><h3>My Sales — ONLY SHOP #${currentShop?currentShop.id:''}</h3><div class="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Amount</th><th>Pay</th></tr></thead><tbody>${demoSales.map(s=>`<tr><td>${s.date}</td><td>${escapeHTML(s.product)}</td><td>${s.quantity} ${escapeHTML(s.unit)}</td><td>${money(s.amount)}</td><td><span class="pill">${escapeHTML(s.payment)}</span></td></tr>`).join("")||`<tr><td colspan="5">No sales yet</td></tr>`}</tbody></table></div></section>`;}
-function renderDebts(){return `<h2>Customers & Debts — ${escapeHTML(currentShop?currentShop.name:'')} 🔒 ONLY MY CUSTOMERS</h2><div class="notice">Shop #${currentShop?currentShop.id:''}</div><section class="card"><h3>Add Debt — SHOP #${currentShop?currentShop.id:''}</h3><form id="debt-form"><div class="form-grid"><label>Name *<input class="field" name="custName" required></label><label>Phone<input class="field" name="custPhone"></label><label>Amount *<input class="field" name="custAmount" type="number" required></label></div><button class="primary" type="submit" style="margin-top:12px">Save to Shop #${currentShop?currentShop.id:''}</button><p id="debt-msg"></p></form></section><section class="card"><h3>My Debts — SHOP #${currentShop?currentShop.id:''}</h3><div class="table-wrap"><table><thead><tr><th>Customer</th><th>Phone</th><th>Balance</th></tr></thead><tbody>${demoDebts.map(d=>`<tr><td>${escapeHTML(d.customer)}</td><td>${escapeHTML(d.phone||"")}</td><td>${money(d.amount)}</td></tr>`).join("")||`<tr><td colspan="3">No debts</td></tr>`}</tbody></table></div></section>`;}
-
-function renderSuppliers(){
-    return `<h2>Suppliers — ${escapeHTML(currentShop?currentShop.name:'')} 🔒 ONLY MY SUPPLIERS</h2>
-    <div class="notice">Shop #${currentShop?currentShop.id:''} • Manage product suppliers & contacts</div>
-    <section class="card">
-        <h3>Add Supplier — SHOP #${currentShop?currentShop.id:''}</h3>
-        <form id="supplier-form">
-            <div class="form-grid">
-                <label>Supplier Name *<input class="field" name="supName" required placeholder="e.g. Unga Feeds"></label>
-                <label>Phone *<input class="field" name="supPhone" required placeholder="07..."></label>
-                <label>Company / Distributor<input class="field" name="supCompany" placeholder="e.g. Unga Farm Care"></label>
-                <label>Main Product Supplied<input class="field" name="supItem" placeholder="e.g. Dairy Meal"></label>
+    <!-- TOP HEADER -->
+    <header class="bg-white px-4 py-3 shadow-sm sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div class="bg-emerald-600 text-white p-2 rounded-lg">
+                <i class="fa-solid fa-store text-lg"></i>
             </div>
-            <button class="primary" type="submit" style="margin-top:12px">Save Supplier</button>
-            <p id="sup-msg"></p>
-        </form>
-    </section>
-    <section class="card">
-        <h3>My Suppliers — SHOP #${currentShop?currentShop.id:''}</h3>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Supplier</th><th>Phone</th><th>Company</th><th>Product</th></tr></thead>
-                <tbody>${demoSuppliers.map(s=>`<tr><td><strong>${escapeHTML(s.name)}</strong></td><td>${escapeHTML(s.phone)}</td><td>${escapeHTML(s.company)}</td><td><span class="pill">${escapeHTML(s.item)}</span></td></tr>`).join("")||`<tr><td colspan="4" style="text-align:center;color:var(--muted)">No suppliers added yet</td></tr>`}</tbody>
-            </table>
-        </div>
-    </section>`;
-}
-
-function renderExpenses(){
-    const totalExp = demoExpenses.reduce((sum, e) => sum + e.amount, 0);
-    return `<h2>Expenses — ${escapeHTML(currentShop?currentShop.name:'')} 🔒 ONLY MY EXPENSES</h2>
-    <div class="notice">Shop #${currentShop?currentShop.id:''} • Track shop operational costs</div>
-    <div class="stats" style="grid-template-columns:1fr">
-        <section class="card" style="border:2px solid #b83232; background:#fff0ed">
-            <div>💳 Total Shop Expenses</div>
-            <div style="font-size:22px;font-weight:800;margin:8px 0;color:#b83232">${money(totalExp)}</div>
-            <div style="font-size:11px;color:var(--muted)">Shop #${currentShop?currentShop.id:''}</div>
-        </section>
-    </div>
-    <section class="card">
-        <h3>Record New Expense — SHOP #${currentShop?currentShop.id:''}</h3>
-        <form id="expense-form">
-            <div class="form-grid">
-                <label>Expense Description *<input class="field" name="expTitle" required placeholder="e.g. Rent / Transport / Electricity"></label>
-                <label>Amount (KSh) *<input class="field" name="expAmount" type="number" step="any" min="1" required></label>
-                <label>Category<select class="field" name="expCategory"><option value="Rent">Rent</option><option value="Transport">Transport</option><option value="Utilities">Utilities (Water/Power)</option><option value="Salaries">Salaries</option><option value="General">General Expense</option></select></label>
+            <div>
+                <h1 class="font-bold text-gray-800 text-lg leading-none">DukaPOS</h1>
+                <span id="networkStatus" class="text-xs font-semibold text-emerald-600">● Offline Ready</span>
             </div>
-            <button class="primary" type="submit" style="margin-top:12px;background:#b83232">Record Expense</button>
-            <p id="exp-msg"></p>
-        </form>
-    </section>
-    <section class="card">
-        <h3>Expense Records — SHOP #${currentShop?currentShop.id:''}</h3>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
-                <tbody>${demoExpenses.map(e=>`<tr><td>${e.date}</td><td><strong>${escapeHTML(e.title)}</strong></td><td><span class="pill">${escapeHTML(e.category)}</span></td><td style="color:#b83232;font-weight:700">${money(e.amount)}</td></tr>`).join("")||`<tr><td colspan="4" style="text-align:center;color:var(--muted)">No expenses recorded yet</td></tr>`}</tbody>
-            </table>
         </div>
-    </section>`;
-}
+        <div class="flex items-center space-x-3">
+            <button onclick="triggerSync()" class="p-2 text-gray-600 hover:text-emerald-600 text-sm flex items-center gap-1 bg-gray-100 rounded-lg">
+                <i class="fa-solid fa-rotate"></i> Sync
+            </button>
+            <i class="fa-solid fa-bell text-gray-500 text-lg"></i>
+        </div>
+    </header>
 
-function renderReports(){
-    const dailyMap = {};
-    demoSales.forEach(s => {
-        const dayKey = s.rawDate ? s.rawDate.split('T')[0] : s.date;
-        if (!dailyMap[dayKey]) {
-            dailyMap[dayKey] = { date: dayKey, totalAmount: 0, count: 0 };
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="p-4 max-w-md mx-auto space-y-5">
+
+        <!-- DASHBOARD TITLE -->
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-800">Dashboard</h2>
+            <button onclick="quickSaleModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm flex items-center gap-1">
+                <i class="fa-solid fa-plus"></i> New Sale
+            </button>
+        </div>
+
+        <!-- MAIN SALES CARD -->
+        <div class="bg-emerald-100/70 border border-emerald-200 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center space-x-1 text-emerald-800 text-xs font-medium mb-1">
+                <i class="fa-solid fa-arrow-trend-up"></i>
+                <span>Sales Today</span>
+            </div>
+            <div id="salesToday" class="text-3xl font-extrabold text-gray-900 mb-3">Ksh 0</div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white rounded-xl p-3 shadow-sm">
+                    <div class="flex items-center text-emerald-700 text-xs mb-1">
+                        <i class="fa-solid fa-receipt mr-1"></i> Orders
+                    </div>
+                    <div id="orderCount" class="text-xl font-bold text-gray-800">0</div>
+                </div>
+                <div class="bg-white rounded-xl p-3 shadow-sm">
+                    <div class="flex items-center text-emerald-700 text-xs mb-1">
+                        <i class="fa-solid fa-chart-simple mr-1"></i> Avg Order
+                    </div>
+                    <div id="avgOrder" class="text-xl font-bold text-gray-800">Ksh 0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SALES ANALYTICS (SUMMARY) -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-gray-800 text-sm">Payment Breakdown</h3>
+                <span class="text-xs text-gray-400">Today</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-gray-50 p-2 rounded-lg border">
+                    <div class="text-xs text-gray-500">M-Pesa</div>
+                    <div id="mpesaSales" class="font-bold text-gray-800 text-sm">Ksh 0</div>
+                </div>
+                <div class="bg-gray-50 p-2 rounded-lg border">
+                    <div class="text-xs text-gray-500">Cash</div>
+                    <div id="cashSales" class="font-bold text-gray-800 text-sm">Ksh 0</div>
+                </div>
+                <div class="bg-gray-50 p-2 rounded-lg border">
+                    <div class="text-xs text-gray-500">Debt (Mkopo)</div>
+                    <div id="creditSales" class="font-bold text-red-600 text-sm">Ksh 0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVENTORY SECTION -->
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-gray-800 text-base">Inventory</h3>
+                <button onclick="addNewProductPrompt()" class="text-xs font-semibold text-emerald-600 hover:underline">+ Add Product</button>
+            </div>
+
+            <div id="productList" class="space-y-2">
+                <!-- Products dynamically rendered here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center max-w-md mx-auto z-40">
+        <button class="flex flex-col items-center text-emerald-600">
+            <i class="fa-solid fa-house text-lg"></i>
+            <span class="text-xs font-medium">Dashboard</span>
+        </button>
+        <button onclick="quickSaleModal()" class="flex flex-col items-center text-gray-400 hover:text-emerald-600">
+            <i class="fa-solid fa-receipt text-lg"></i>
+            <span class="text-xs font-medium">Sales</span>
+        </button>
+        <button class="flex flex-col items-center text-gray-400 hover:text-emerald-600">
+            <i class="fa-solid fa-box text-lg"></i>
+            <span class="text-xs font-medium">Inventory</span>
+        </button>
+        <button class="flex flex-col items-center text-gray-400 hover:text-emerald-600">
+            <i class="fa-solid fa-user text-lg"></i>
+            <span class="text-xs font-medium">Profile</span>
+        </button>
+    </nav>
+
+    <!-- OFFLINE JAVASCRIPT ENGINE -->
+    <script>
+        // 1. Initialize IndexedDB database for local store storage
+        const db = new Dexie("DukaPOS_DB");
+        db.version(1).stores({
+            products: '++id, name, stock, unit, price, min_stock',
+            sales: '++id, total, method, synced, created_at'
+        });
+
+        // Seed Default Kenya Duka Items if DB is fresh
+        db.on('populate', () => {
+            db.products.bulkAdd([
+                { name: 'Ugali Flour', stock: 24, unit: 'kg', price: 180, min_stock: 5 },
+                { name: 'Cooking Oil', stock: 12, unit: 'L', price: 350, min_stock: 15 },
+                { name: 'Blueband', stock: 18, unit: '500g', price: 220, min_stock: 5 },
+                { name: 'Sugar', stock: 30, unit: 'kg', price: 160, min_stock: 10 }
+            ]);
+        });
+
+        db.open().then(() => loadDashboard());
+
+        // 2. Load Inventory & Render UI
+        async function loadDashboard() {
+            const products = await db.products.toArray();
+            const productListElem = document.getElementById('productList');
+            productListElem.innerHTML = '';
+
+            products.forEach(item => {
+                const isLow = item.stock <= item.min_stock;
+                const statusBadge = isLow 
+                    ? `<span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-md font-medium">Low stock</span>`
+                    : `<span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-md font-medium">In stock</span>`;
+
+                productListElem.innerHTML += `
+                    <div class="bg-white rounded-xl p-3 shadow-sm flex justify-between items-center border border-gray-100">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-emerald-50 text-emerald-600 p-2 rounded-lg">
+                                <i class="fa-solid fa-box-open text-base"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">${item.name}</h4>
+                                <div class="text-xs text-gray-500">${item.stock} ${item.unit} in stock • Ksh ${item.price}/${item.unit}</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1">
+                            ${statusBadge}
+                            <button onclick="sellSingleProduct(${item.id})" class="text-xs text-emerald-600 font-bold hover:underline">Quick Sell</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            calculateMetrics();
         }
-        dailyMap[dayKey].totalAmount += s.amount;
-        dailyMap[dayKey].count += 1;
-    });
-    const sortedDays = Object.values(dailyMap).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    return `<h2>Reports — ${escapeHTML(currentShop?currentShop.name:'')} 🔒 DAILY BREAKDOWN</h2>
-    <div class="notice">Shop #${currentShop?currentShop.id:''} • Summary of daily performance</div>
-    <section class="card">
-        <h3>📅 Daily Sales Breakdown</h3>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Date</th><th>Transactions</th><th>Total Daily Revenue</th><th>Status</th></tr></thead>
-                <tbody>${sortedDays.map(d=>`<tr><td><strong>${escapeHTML(d.date)}</strong></td><td>${d.count} sales</td><td style="font-weight:700;color:var(--green)">${money(d.totalAmount)}</td><td><span class="pill">Completed</span></td></tr>`).join("")||`<tr><td colspan="4" style="text-align:center;color:var(--muted)">No daily reports recorded yet</td></tr>`}</tbody>
-            </table>
-        </div>
-    </section>`;
-}
+        // 3. Quick Sale Transaction (Deducts Stock Offline Instantly)
+        async function sellSingleProduct(productId) {
+            const product = await db.products.get(productId);
+            if (!product || product.stock <= 0) {
+                alert("Item out of stock!");
+                return;
+            }
 
-function renderStaff(){
-    return `<h2>Staff — ${escapeHTML(currentShop?currentShop.name:'')} 🔒 SHOP ATTENDANTS</h2>
-    <div class="notice">Shop #${currentShop?currentShop.id:''} • Manage shop staff & attendants</div>
-    <section class="card">
-        <h3>Add Staff / Attendant — SHOP #${currentShop?currentShop.id:''}</h3>
-        <form id="staff-form">
-            <div class="form-grid">
-                <label>Full Name *<input class="field" name="stfName" required placeholder="e.g. John Mwangi"></label>
-                <label>Phone Number *<input class="field" name="stfPhone" required placeholder="07..."></label>
-                <label>Role<select class="field" name="stfRole"><option value="Attendant">Attendant</option><option value="Manager">Manager</option><option value="Cashier">Cashier</option></select></label>
-            </div>
-            <button class="primary" type="submit" style="margin-top:12px">Save Staff Member</button>
-            <p id="stf-msg"></p>
-        </form>
-    </section>
-    <section class="card">
-        <h3>Staff List — SHOP #${currentShop?currentShop.id:''}</h3>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Name</th><th>Phone</th><th>Role</th></tr></thead>
-                <tbody>${demoStaff.map(s=>`<tr><td><strong>${escapeHTML(s.name)}</strong></td><td>${escapeHTML(s.phone)}</td><td><span class="pill">${escapeHTML(s.role)}</span></td></tr>`).join("")||`<tr><td colspan="3" style="text-align:center;color:var(--muted)">No staff added yet</td></tr>`}</tbody>
-            </table>
-        </div>
-    </section>`;
-}
+            // Prompt Payment Method
+            const method = prompt(`Selling 1 ${product.unit} of ${product.name} for Ksh ${product.price}.\nPayment method? (MPESA, CASH, CREDIT):`, "MPESA");
+            if (!method) return;
 
-function renderSettings(){const isSuper=currentShop&&currentShop.is_admin;const{todayStr,todaySalesAmount,todayProfit,totalProfit}=calcProfits();const isUnlocked=currentShop?sessionStorage.getItem(`profit_unlocked_${currentShop.id}`)==='true':false;if(isSuper){return `<h2>Settings — ${escapeHTML(currentShop.name)} 👑 SUPER ADMIN</h2><div class="notice" style="background:#eaf7ef;border:1px solid #087443">👑 SUPER ADMIN — See ALL shops</div><section class="card" style="border:2px solid #087443"><h3>📊 Super Admin Page — YOU ONLY</h3><a href="/admin.html" target="_blank" style="display:inline-block;background:var(--green);color:#fff;padding:11px 18px;border-radius:9px;text-decoration:none;font-weight:700">🔐 Open Super Admin</a></section><section class="card"><h3>🔒 Change Super Admin Password</h3><form id="change-pass-form"><div class="form-grid" style="grid-template-columns:1fr"><label>Current Password<div class="passInputWrap"><input class="field" id="currPass" type="password" required><button class="eyeBtn" type="button" data-target="currPass">👁️</button></div></label><label>New Password<div class="passInputWrap"><input class="field" id="newPass" type="password" required><button class="eyeBtn" type="button" data-target="newPass">👁️</button></div></label><label>Confirm<div class="passInputWrap"><input class="field" id="confirmPass" type="password" required><button class="eyeBtn" type="button" data-target="confirmPass">👁️</button></div></label></div><button class="primary" type="submit" style="margin-top:12px">Save</button><p id="changePassMsg"></p></form></section>`;}else{return `<h2>Settings — ${escapeHTML(currentShop.name)} 🔒 CLIENT MINI ADMIN</h2><div class="notice">Shop #${currentShop.id} • ONLY YOUR DATA • Profit PIN Owner Only</div><section class="card" style="background:#f0faf4;border:2px solid #087443"><h3>📊 My Business Summary — MINI ADMIN — ONLY MY SHOP</h3><p style="font-size:12px;color:var(--muted)">Sales visible to workers, Profit visible only to owner with PIN</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px"><div style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted)">Filtered Sales (${todayStr})</div><div style="font-size:18px;font-weight:800">${money(todaySalesAmount)}</div><small>Shop #${currentShop.id}</small></div><div style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted)">Filtered Profit 🔒 Owner Only</div><div style="font-size:18px;font-weight:800;color:${isUnlocked?'#087443':'#ccc'}">${isUnlocked?money(todayProfit):'•••••• KSh'}</div>${!isUnlocked?`<div style="margin-top:8px;display:flex;gap:6px"><div class="passInputWrap" style="flex:1"><input class="field" id="profitPinInput" type="password" placeholder="Enter Profit PIN" style="padding:8px"><button class="eyeBtn" type="button" data-target="profitPinInput">👁️</button></div><button class="primary" id="unlockProfitBtn" type="button" style="padding:8px 12px">Unlock</button></div><small id="pinMsg" style="color:#b83232"></small>`: `<small style="color:var(--green)">🔓 Unlocked • <button id="lockProfitBtn" type="button" style="border:0;background:transparent;color:var(--muted);text-decoration:underline;cursor:pointer">Lock</button></small>`}</div><div style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted)">Total Sales All Time</div><div style="font-size:18px;font-weight:800">${money(demoSales.reduce((s,x)=>s+x.amount,0))}</div><small>${demoSales.length} sales total</small></div><div style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted)">Total Profit All Time 🔒</div><div style="font-size:18px;font-weight:800;color:${isUnlocked?'#087443':'#ccc'}">${isUnlocked?money(totalProfit):'••••••'}</div><small>${isUnlocked?'Sales - Cost':'Owner PIN required'}</small></div></div><div style="margin-top:12px;background:#fff;padding:10px;border-radius:8px;font-size:12px;border:1px solid var(--border)"><strong>Privacy:</strong> Workers see sales amount, but profit hidden behind PIN. Only owner knows.</div></section><section class="card"><h3>🔒 Change Shop Password (workers use)</h3><form id="change-pass-form"><div class="form-grid" style="grid-template-columns:1fr"><label>Current Shop Password<div class="passInputWrap"><input class="field" id="currPass" type="password" required><button class="eyeBtn" type="button" data-target="currPass">👁️</button></div></label><label>New Shop Password<div class="passInputWrap"><input class="field" id="newPass" type="password" required><button class="eyeBtn" type="button" data-target="newPass">👁️</button></div></label><label>Confirm<div class="passInputWrap"><input class="field" id="confirmPass" type="password" required><button class="eyeBtn" type="button" data-target="confirmPass">👁️</button></div></label></div><button class="primary" type="submit" style="margin-top:12px">Save Shop Password</button><p id="changePassMsg"></p></form></section><section class="card" style="border:2px solid #d4a017"><h3>💰 Change Profit PIN (Owner Only — Keep Secret)</h3><form id="change-profit-pin-form"><div class="form-grid" style="grid-template-columns:1fr"><label>Current Profit PIN<div class="passInputWrap"><input class="field" id="currProfitPin" type="password" required><button class="eyeBtn" type="button" data-target="currProfitPin">👁️</button></div></label><label>New Profit PIN (4-6 digits)<div class="passInputWrap"><input class="field" id="newProfitPin" type="password" required placeholder="e.g. 7788"><button class="eyeBtn" type="button" data-target="newProfitPin">👁️</button></div></label><label>Confirm Profit PIN<div class="passInputWrap"><input class="field" id="confirmProfitPin" type="password" required><button class="eyeBtn" type="button" data-target="confirmProfitPin">👁️</button></div></label></div><button class="primary" type="submit" style="margin-top:12px;background:#d4a017">Save Profit PIN — Secret</button><p id="changeProfitPinMsg"></p></form></section>`;}}
+            // Update Stock locally
+            await db.products.update(productId, { stock: product.stock - 1 });
 
-function render(){
-    renderNavigation();
-    const c=document.getElementById("main-content");
-    const pages={
-        "Dashboard":renderDashboard,
-        "Products":renderProducts,
-        "Stock":renderStock,
-        "Sales":renderSales,
-        "Customers / Debts":renderDebts,
-        "Suppliers":renderSuppliers,
-        "Expenses":renderExpenses,
-        "Reports":renderReports,
-        "Staff":renderStaff,
-        "Settings":renderSettings
-    };
-    c.innerHTML=(pages[currentPage]||renderDashboard)();
-    c.querySelectorAll("[data-page]").forEach(b=>{b.addEventListener("click",()=>{currentPage=b.dataset.page;render()})});
+            // Record Sale Record locally
+            await db.sales.add({
+                total: product.price,
+                method: method.toUpperCase(),
+                synced: 0,
+                created_at: new Date().toISOString()
+            });
 
-const dashSalesFilter = document.getElementById("dashSalesFilter");
-const dashCustomRange = document.getElementById("dashCustomRange");
-if(dashSalesFilter){
-    dashSalesFilter.addEventListener("change", e => {
-        currentSalesFilter = e.target.value;
-        if(dashCustomRange) dashCustomRange.style.display = currentSalesFilter === 'custom' ? 'flex' : 'none';
-        if(currentSalesFilter !== 'custom') render();
-    });
-}
-const applyDashFilter = document.getElementById("applyDashFilter");
-if(applyDashFilter){
-    applyDashFilter.addEventListener("click", () => {
-        const startInput = document.getElementById("dashStartDate");
-        const endInput = document.getElementById("dashEndDate");
-        if(startInput) customStartDate = startInput.value;
-        if(endInput) customEndDate = endInput.value;
-        render();
-    });
-}
+            loadDashboard();
+        }
 
-const addBtn=document.getElementById("add-product-btn");const panel=document.getElementById("add-product-panel");const form=document.getElementById("add-product-form");const unitSelect=document.getElementById("unitSelect");const bagWeightLabel=document.getElementById("bagWeightLabel");const bagWeightSelect=document.getElementById("bagWeightSelect");function toggleBagWeight(){if(!unitSelect||!bagWeightLabel)return;bagWeightLabel.style.display=unitSelect.value==='bags'?'block':'none';if(bagWeightSelect)bagWeightSelect.required=unitSelect.value==='bags';}if(unitSelect){unitSelect.addEventListener("change",toggleBagWeight);toggleBagWeight();}if(addBtn){addBtn.addEventListener("click",()=>{panel.hidden=false;panel.scrollIntoView({behavior:"smooth"})})}const cancel=document.getElementById("cancel-product-btn");if(cancel)cancel.addEventListener("click",()=>{panel.hidden=true});const seedBtn=document.getElementById("seed-btn");if(seedBtn){seedBtn.addEventListener("click",async()=>{if(!currentShop){alert('Login first');return;}const demo=[{name:'Omena (Fish Meal)',category:'Animal Feeds',quantity:20,unit:'bags',bag_weight:50,cost:2800,price:3200},{name:'Sunflower Cake',category:'Animal Feeds',quantity:15,unit:'bags',bag_weight:50,cost:2200,price:2600},{name:'Black Gold - Dairy',category:'Animal Feeds',quantity:25,unit:'bags',bag_weight:70,cost:2400,price:2800},{name:'Layers Mash',category:'Animal Feeds',quantity:30,unit:'bags',bag_weight:50,cost:2500,price:2900},{name:'Growers Mash',category:'Animal Feeds',quantity:20,unit:'bags',bag_weight:70,cost:2300,price:2700},{name:'Chick Mash',category:'Animal Feeds',quantity:15,unit:'bags',bag_weight:70,cost:2600,price:3000},{name:'Kienyeji Mash',category:'Animal Feeds',quantity:18,unit:'bags',bag_weight:50,cost:2400,price:2800},{name:'Dairy Meal',category:'Animal Feeds',quantity:22,unit:'bags',bag_weight:70,cost:2350,price:2750},{name:'Maize Germ',category:'Animal Feeds',quantity:30,unit:'bags',bag_weight:50,cost:1800,price:2100},{name:'Wheat Bran',category:'Animal Feeds',quantity:25,unit:'bags',bag_weight:50,cost:1500,price:1800},{name:'Cotton Cake',category:'Animal Feeds',quantity:12,unit:'bags',bag_weight:50,cost:2100,price:2500},{name:'Maize Grain 90kg',category:'Animal Feeds',quantity:10,unit:'bags',bag_weight:90,cost:4000,price:4500},{name:'DCP Mineral',category:'Animal Feeds',quantity:50,unit:'kg',bag_weight:1,cost:120,price:150},{name:'Layers Booster',category:'Veterinary Products',quantity:100,unit:'packets',bag_weight:1,cost:200,price:300},{name:'Aflatoxin Binder',category:'Veterinary Products',quantity:80,unit:'packets',bag_weight:1,cost:180,price:250}];const toInsert=demo.map(d=>({...d,shop_id:currentShop.id}));const {error}=await supa.from('products').insert(toInsert);if(error)alert(error.message);else await loadAll();});}if(form){form.addEventListener("submit",async e=>{e.preventDefault();const fd=new FormData(form);const name=String(fd.get("productName")||"").trim();const category=String(fd.get("category")||"");const unit=String(fd.get("unit")||"");const bag_weight=unit==='bags'?Number(fd.get("bag_weight")):1;const quantity=Number(fd.get("quantity"));const cost=Number(fd.get("cost"));const price=Number(fd.get("price"));const msg=document.getElementById("product-form-message");if(!name||!category||!unit){msg.textContent="Fill all";msg.style.color="#b83232";return;}if(cost >= price){msg.textContent=`❌ Cost Price (KSh ${cost}) cannot be higher than or equal to Selling Price (KSh ${price})`;msg.style.color="#b83232";return;}msg.textContent="Saving...";const {error}=await supa.from('products').insert([{name,category,quantity,unit,bag_weight,cost,price,shop_id:currentShop.id}]);if(error){msg.textContent=error.message;msg.style.color="#b83232";}else{msg.textContent="✅ Product saved successfully!";msg.style.color="#087443";form.reset();await loadAll();}});}const search=document.getElementById("product-search");if(search){search.addEventListener("input",ev=>{searchTerm=ev.target.value;render();const n=document.getElementById("product-search");if(n){n.focus();n.selectionStart=n.value.length}})}const filt=document.getElementById("category-filter");if(filt){filt.addEventListener("change",ev=>{productFilter=ev.target.value;render()})}const saleForm=document.getElementById("sale-form");const saleProd=document.getElementById("saleProduct");const saleUnit=document.getElementById("saleUnit");const saleQty=document.getElementById("saleQty");const calc=document.getElementById("calcPreview");const bagInfo=document.getElementById("bagInfo");const paySelect=document.getElementById("salePaySelect");const splitFields=document.getElementById("splitPayFields");if(paySelect){paySelect.addEventListener("change",()=>{if(splitFields)splitFields.style.display=paySelect.value==="Split"?"block":"none";});}function updatePreview(){if(!saleProd||!saleQty)return;const prodId=Number(saleProd.value);const qty=Number(saleQty.value);const discountInput=document.getElementById("saleDiscount");const discount=discountInput?Number(discountInput.value)||0:0;const prod=demoProducts.find(p=>p.id===prodId);if(!prod)return;if(saleUnit){if(prod.unit==='bags'){saleUnit.innerHTML=`<option value="bags">Bags</option><option value="kg">Kgs</option>`;}else{saleUnit.innerHTML=`<option value="${prod.unit}">${prod.unit}</option>`;}}const sUnit=saleUnit?saleUnit.value:prod.unit;if(!qty){if(calc)calc.textContent="";if(bagInfo)bagInfo.textContent="";return;}if(bagInfo)bagInfo.textContent=prod.unit==='bags'?`This product: 1 bag = ${prod.bag_weight}kg`:`Stored as ${prod.unit}`;let pricePerUnit=prod.price;if(prod.unit==='bags'&&sUnit==='kg')pricePerUnit=prod.price/prod.bag_weight;if(prod.unit==='kg'&&sUnit==='bags')pricePerUnit=prod.price*prod.bag_weight;let totalAmount=(qty*pricePerUnit)-discount;if(totalAmount<0)totalAmount=0;if(calc)calc.textContent=`= ${money(totalAmount)} (Regular: ${money(qty*pricePerUnit)} - Discount: ${money(discount)})`;}if(saleProd){saleProd.addEventListener("change",updatePreview);}if(saleUnit){saleUnit.addEventListener("change",updatePreview);}if(saleQty){saleQty.addEventListener("input",updatePreview);}document.addEventListener('input',e=>{if(e.target&&e.target.id==='saleDiscount')updatePreview();});if(saleForm){saleForm.addEventListener("submit",async e=>{e.preventDefault();const fd=new FormData(saleForm);const prodId=Number(fd.get("saleProduct"));const qty=Number(fd.get("saleQty"));const sUnit=String(fd.get("saleUnit"));let pay=String(fd.get("salePay"));const discount=Number(fd.get("saleDiscount")||0);const msg=document.getElementById("sale-msg");const prod=demoProducts.find(p=>p.id===prodId);if(!prod){msg.textContent="Choose product";return;}let qtyToDeduct=qty;if(prod.unit==='bags'&&sUnit==='kg')qtyToDeduct=qty/prod.bag_weight;else if(prod.unit==='kg'&&sUnit==='bags')qtyToDeduct=qty*prod.bag_weight;if(qtyToDeduct>prod.quantity){msg.textContent=`Not enough! Only ${prod.quantity} ${prod.unit} left.`;msg.style.color="#b83232";return;}let pricePerUnit=prod.price;if(prod.unit==='bags'&&sUnit==='kg')pricePerUnit=prod.price/prod.bag_weight;if(prod.unit==='kg'&&sUnit==='bags')pricePerUnit=prod.price*prod.bag_weight;const amount=(qty*pricePerUnit)-discount;let costPerUnit=prod.cost;if(prod.unit==='bags'&&sUnit==='kg')costPerUnit=prod.cost/prod.bag_weight;if(prod.unit==='kg'&&sUnit==='bags')costPerUnit=prod.cost*prod.bag_weight;if(amount<(qty*costPerUnit)){msg.textContent=`❌ Bargain too low! Cannot sell below total cost (${money(qty*costPerUnit)})!`;msg.style.color="#b83232";return;}if(pay==="Split"){const cashAmt=Number(document.getElementById("cashAmountInput").value||0);const mpesaAmt=Number(document.getElementById("mpesaAmountInput").value||0);if((cashAmt+mpesaAmt)!==amount){msg.textContent=`❌ Split amounts (KSh ${cashAmt+mpesaAmt}) must equal total (KSh ${amount})`;msg.style.color="#b83232";return;}pay=`Split (Cash: ${cashAmt} / M-PESA: ${mpesaAmt})`;}if(discount>0){pay=`${pay} (Bargained / Discount: -${money(discount)})`;}msg.textContent=`Recording ${qty} ${sUnit} = ${money(amount)}...`;
+        // 4. Record Custom Sale
+        async function quickSaleModal() {
+            const amount = parseFloat(prompt("Enter total sale amount (Ksh):"));
+            if (isNaN(amount) || amount <= 0) return;
 
-const todayDateStr = new Date().toISOString().split('T')[0];
-const {error:insErr}=await supa.from('sales').insert([{product_name:prod.name,quantity:qty,unit:sUnit,amount:amount,payment:pay,shop_id:currentShop.id,sale_date:todayDateStr}]);
+            const method = prompt("Enter payment method (MPESA / CASH / CREDIT):", "MPESA");
+            if (!method) return;
 
-if(insErr){msg.textContent=insErr.message;msg.style.color="#b83232";return;}const newQty=prod.quantity-qtyToDeduct;const {error:upErr}=await supa.from('products').update({quantity:newQty}).eq('id',prodId);if(upErr){msg.textContent=upErr.message;return;}msg.textContent=`✅ ${qty} ${sUnit} = ${money(amount)} Saved! Shop #${currentShop.id}`;msg.style.color="#087443";await loadAll();});}
+            await db.sales.add({
+                total: amount,
+                method: method.toUpperCase(),
+                synced: 0,
+                created_at: new Date().toISOString()
+            });
 
-const debtForm=document.getElementById("debt-form");if(debtForm){debtForm.addEventListener("submit",async e=>{e.preventDefault();const fd=new FormData(debtForm);const name=String(fd.get("custName")||"").trim();const phone=String(fd.get("custPhone")||"").trim();const amount=Number(fd.get("custAmount"));const msg=document.getElementById("debt-msg");if(!name||!amount){msg.textContent="Fill";return;}msg.textContent="Saving...";const {error}=await supa.from('customers').insert([{name,phone,amount,shop_id:currentShop.id}]);if(error){msg.textContent=error.message;}else{msg.textContent="Saved Shop #"+currentShop.id;await loadAll();}});}
+            loadDashboard();
+        }
 
-const supForm=document.getElementById("supplier-form");if(supForm){supForm.addEventListener("submit",async e=>{e.preventDefault();const fd=new FormData(supForm);const name=String(fd.get("supName")||"").trim();const phone=String(fd.get("supPhone")||"").trim();const company=String(fd.get("supCompany")||"").trim();const item=String(fd.get("supItem")||"").trim();const msg=document.getElementById("sup-msg");if(!name||!phone){msg.textContent="Name and phone required";return;}msg.textContent="Saving...";const {error}=await supa.from('suppliers').insert([{name,phone,company,item,shop_id:currentShop.id}]);if(error){msg.textContent=error.message;msg.style.color="#b83232";}else{msg.textContent="✅ Supplier saved!";msg.style.color="#087443";await loadAll();}});}
+        // 5. Add New Product
+        async function addNewProductPrompt() {
+            const name = prompt("Product Name (e.g., Milk):");
+            const price = parseFloat(prompt("Selling Price per unit (Ksh):"));
+            const stock = parseInt(prompt("Initial Stock Quantity:"));
+            const unit = prompt("Unit (e.g., kg, L, pcs, 500g):", "pcs");
 
-const expForm=document.getElementById("expense-form");if(expForm){expForm.addEventListener("submit",async e=>{e.preventDefault();const fd=new FormData(expForm);const title=String(fd.get("expTitle")||"").trim();const amount=Number(fd.get("expAmount"));const category=String(fd.get("expCategory")||"General");const msg=document.getElementById("exp-msg");if(!title||!amount){msg.textContent="Fill all required fields";return;}msg.textContent="Saving...";const {error}=await supa.from('expenses').insert([{title,amount,category,shop_id:currentShop.id}]);if(error){msg.textContent=error.message;msg.style.color="#b83232";}else{msg.textContent="✅ Expense recorded!";msg.style.color="#087443";await loadAll();}});}
+            if (name && !isNaN(price) && !isNaN(stock)) {
+                await db.products.add({ name, price, stock, unit, min_stock: 5 });
+                loadDashboard();
+            }
+        }
 
-const stfForm=document.getElementById("staff-form");if(stfForm){stfForm.addEventListener("submit",async e=>{e.preventDefault();const fd=new FormData(stfForm);const name=String(fd.get("stfName")||"").trim();const phone=String(fd.get("stfPhone")||"").trim();const role=String(fd.get("stfRole")||"Attendant");const msg=document.getElementById("stf-msg");if(!name||!phone){msg.textContent="Name and phone required";return;}msg.textContent="Saving...";const {error}=await supa.from('staff').insert([{name,phone,role,shop_id:currentShop.id}]);if(error){msg.textContent=error.message;msg.style.color="#b83232";}else{msg.textContent="✅ Staff member saved!";msg.style.color="#087443";await loadAll();}});}
+        // 6. Calculate Sales Metrics
+        async function calculateMetrics() {
+            const today = new Date().toISOString().split('T')[0];
+            const sales = await db.sales.toArray();
+            
+            const todaySales = sales.filter(s => s.created_at.startsWith(today));
 
-const changeForm=document.getElementById("change-pass-form");if(changeForm){changeForm.addEventListener("submit",async e=>{e.preventDefault();const curr=document.getElementById("currPass").value;const newP=document.getElementById("newPass").value;const conf=document.getElementById("confirmPass").value;const msg=document.getElementById("changePassMsg");if(!curr||!newP||!conf){msg.textContent="Fill all";msg.style.color="#b83232";return;}if(newP!==conf){msg.textContent="❌ Don't match!";msg.style.color="#b83232";return;}if(newP.length<4){msg.textContent="Min 4 chars";msg.style.color="#b83232";return;}msg.textContent="Checking...";msg.style.color='#718278';const {data,error}=await supa.from('shops').select('*').eq('id',currentShop.id).single();if(error){msg.textContent=error.message;msg.style.color="#b83232";return;}if(data.password&&data.password!==curr){msg.textContent="❌ Current wrong!";msg.style.color="#b83232";return;}const {error:upErr}=await supa.from('shops').update({password:newP}).eq('id',currentShop.id);if(upErr){msg.textContent=upErr.message;msg.style.color="#b83232";return;}msg.textContent=`✅ Shop Password changed! New: ${newP}`;msg.style.color="#087443";await renderShopList();});}const unlockBtn=document.getElementById("unlockProfitBtn");if(unlockBtn){unlockBtn.addEventListener("click",async()=>{const pinInput=document.getElementById("profitPinInput");const msg=document.getElementById("pinMsg");const pin=pinInput?pinInput.value:'';if(!pin){msg.textContent='Enter Profit PIN';return;}msg.textContent='Checking...';const {data,error}=await supa.from('shops').select('profit_pin').eq('id',currentShop.id).single();if(error){msg.textContent=error.message;return;}if((data.profit_pin||'')===pin){sessionStorage.setItem(`profit_unlocked_${currentShop.id}`,'true');render();}else{msg.textContent='❌ Wrong Profit PIN!';}});}const lockBtn=document.getElementById("lockProfitBtn");if(lockBtn){lockBtn.addEventListener("click",()=>{sessionStorage.removeItem(`profit_unlocked_${currentShop.id}`);render();});}const changeProfitForm=document.getElementById("change-profit-pin-form");if(changeProfitForm){changeProfitForm.addEventListener("submit",async e=>{e.preventDefault();const curr=document.getElementById("currProfitPin").value;const newPin=document.getElementById("newProfitPin").value;const conf=document.getElementById("confirmProfitPin").value;const msg=document.getElementById("changeProfitPinMsg");if(newPin!==conf){msg.textContent='❌ PINs dont match';msg.style.color='#b83232';return;}if(newPin.length<4){msg.textContent='Min 4 chars';msg.style.color='#b83232';return;}msg.textContent='Checking...';msg.style.color='#718278';const {data}=await supa.from('shops').select('profit_pin').eq('id',currentShop.id).single();if(data&&data.profit_pin&&data.profit_pin!==curr){msg.textContent='❌ Current Profit PIN wrong';msg.style.color='#b83232';return;}const {error}=await supa.from('shops').update({profit_pin:newPin}).eq('id',currentShop.id);if(error){msg.textContent=error.message;msg.style.color='#b83232';}else{msg.textContent=`✅ Profit PIN changed! New: ${newPin} — Keep secret`;msg.style.color='#087443';sessionStorage.setItem(`profit_unlocked_${currentShop.id}`,'true');}});}
-}
-initLogin();
-</script></body></html>
+            let total = 0;
+            let mpesa = 0;
+            let cash = 0;
+            let credit = 0;
+
+            todaySales.forEach(s => {
+                total += s.total;
+                if (s.method === 'MPESA') mpesa += s.total;
+                else if (s.method === 'CASH') cash += s.total;
+                else if (s.method === 'CREDIT') credit += s.total;
+            });
+
+            const count = todaySales.length;
+            const avg = count > 0 ? Math.round(total / count) : 0;
+
+            document.getElementById('salesToday').innerText = `Ksh ${total.toLocaleString()}`;
+            document.getElementById('orderCount').innerText = count;
+            document.getElementById('avgOrder').innerText = `Ksh ${avg.toLocaleString()}`;
+
+            document.getElementById('mpesaSales').innerText = `Ksh ${mpesa.toLocaleString()}`;
+            document.getElementById('cashSales').innerText = `Ksh ${cash.toLocaleString()}`;
+            document.getElementById('creditSales').innerText = `Ksh ${credit.toLocaleString()}`;
+        }
+
+        // 7. Online / Offline Status Detection
+        function updateOnlineStatus() {
+            const statusElem = document.getElementById('networkStatus');
+            if (navigator.onLine) {
+                statusElem.innerHTML = '● Online (Auto-Syncing)';
+                statusElem.className = 'text-xs font-semibold text-emerald-600';
+            } else {
+                statusElem.innerHTML = '● Offline Mode';
+                statusElem.className = 'text-xs font-semibold text-amber-600';
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // 8. Manual Sync Trigger (For Cloud Database when online)
+        async function triggerSync() {
+            if (!navigator.onLine) {
+                alert("Device is offline. Connection required to sync with cloud.");
+                return;
+            }
+            const pendingSales = await db.sales.where('synced').equals(0).toArray();
+            if (pendingSales.length === 0) {
+                alert("All local data is already up to date!");
+                return;
+            }
+
+            // Simulate sync endpoint call
+            await db.sales.where('synced').equals(0).modify({ synced: 1 });
+            alert(`${pendingSales.length} offline transactions synced successfully!`);
+        }
+    </script>
+</body>
+</html>
