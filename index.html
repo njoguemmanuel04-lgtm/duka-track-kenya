@@ -11,24 +11,24 @@
 </head>
 <body class="bg-gray-50 text-gray-900 font-sans antialiased">
 
-    <!-- AUTHENTICATION CONTAINER (Shown if not logged in) -->
+    <!-- AUTHENTICATION CONTAINER (PIN-Based Login) -->
     <div id="auth-container" class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
         <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
             <div class="text-center mb-6">
                 <h1 class="text-3xl font-extrabold text-emerald-600">Duka Manager</h1>
-                <p class="text-sm text-gray-500 mt-1">Sign in to access your shop dashboard</p>
+                <p class="text-sm text-gray-500 mt-1">Enter your Shop PIN to open the register</p>
             </div>
             <form id="login-form" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-600">Email Address</label>
-                    <input type="email" id="email" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="owner@duka.co.ke">
+                    <label class="block text-xs font-semibold uppercase text-gray-600">Shop Name or ID</label>
+                    <input type="text" id="shop-query" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="e.g. Njogu Duka">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-600">Password</label>
-                    <input type="password" id="password" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="••••••••">
+                    <label class="block text-xs font-semibold uppercase text-gray-600">Shop PIN</label>
+                    <input type="password" id="shop-pin" maxlength="6" required class="mt-1 w-full px-4 py-2 border rounded-lg text-sm tracking-widest focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="••••">
                 </div>
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg transition duration-200">
-                    Sign In
+                    Open Register
                 </button>
             </form>
             <div id="auth-error" class="mt-4 text-center text-sm text-red-500 font-medium"></div>
@@ -45,9 +45,9 @@
                     <span id="shop-name-badge" class="bg-emerald-800 text-emerald-200 text-xs px-2.5 py-1 rounded-full font-medium">Loading Duka...</span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span id="user-email-display" class="text-sm text-emerald-100 hidden sm:inline"></span>
+                    <span id="user-email-display" class="text-sm text-emerald-100 hidden sm:inline">Attendant Session</span>
                     <button id="logout-btn" class="bg-emerald-800 hover:bg-emerald-900 text-xs px-3 py-1.5 rounded font-semibold transition">
-                        Logout
+                        Lock Register
                     </button>
                 </div>
             </div>
@@ -108,7 +108,7 @@
 
     <!-- CLIENT SCRIPT LOGIC -->
     <script>
-        // SUPABASE CONFIGURATION (Configured with your credentials)
+        // SUPABASE CONFIGURATION
         const SUPABASE_URL = 'https://torzbgvwjhthzuifdses.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcnpiZ3Z3amh0aHp1aWZkc2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyODQ4OTAsImV4cCI6MjEwODg2MDg5MH0.Jjzgt-mCxA94Y1lG6fLDLupteE8RZs6dygJO5BVClKY';
         
@@ -131,63 +131,70 @@
         const cartTotalDisplay = document.getElementById('cart-total');
         const checkoutCashBtn = document.getElementById('checkout-cash-btn');
 
-        // Check active session on load
-        async function checkUserSession() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                authContainer.classList.add('hidden');
-                appContainer.classList.remove('hidden');
-                userEmailDisplay.textContent = session.user.email;
-                await loadTenantContext(session.user.id);
+        // Check active session on load via localStorage
+        function checkUserSession() {
+            const savedShopId = localStorage.getItem('duka_active_shop_id');
+            const savedShopName = localStorage.getItem('duka_active_shop_name');
+
+            if (savedShopId && savedShopName) {
+                currentShopId = savedShopId;
+                enterDashboard(savedShopName);
             } else {
                 authContainer.classList.remove('hidden');
                 appContainer.classList.add('hidden');
             }
         }
 
-        // Login Event
+        // PIN Login Event
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             authError.textContent = '';
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            
+            const shopQuery = document.getElementById('shop-query').value.trim();
+            const pinInput = document.getElementById('shop-pin').value.trim();
 
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) {
-                authError.textContent = error.message;
-            } else {
-                checkUserSession();
+            const { data: shops, error } = await supabaseClient
+                .from('shops')
+                .select('*')
+                .ilike('name', `%${shopQuery}%`)
+                .eq('pin', pinInput)
+                .limit(1);
+
+            if (error || !shops || shops.length === 0) {
+                authError.textContent = 'Invalid Shop Name or PIN!';
+                return;
             }
+
+            const shop = shops[0];
+            currentShopId = shop.id;
+            
+            localStorage.setItem('duka_active_shop_id', shop.id);
+            localStorage.setItem('duka_active_shop_name', shop.name);
+
+            enterDashboard(shop.name);
         });
 
-        // Logout Event
-        logoutBtn.addEventListener('click', async () => {
-            await supabaseClient.auth.signOut();
+        // Transition to App Dashboard
+        function enterDashboard(shopName) {
+            authContainer.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            shopBadge.textContent = shopName;
+            fetchProducts();
+        }
+
+        // Logout / Lock Register
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('duka_active_shop_id');
+            localStorage.removeItem('duka_active_shop_name');
             window.location.reload();
         });
 
-        // Load Shop & Profile Context
-        async function loadTenantContext(userId) {
-            const { data: profile, error } = await supabaseClient
-                .from('profiles')
-                .select('shop_id, shops(name)')
-                .eq('id', userId)
-                .single();
-
-            if (profile && profile.shop_id) {
-                currentShopId = profile.shop_id;
-                shopBadge.textContent = profile.shops.name;
-                fetchProducts();
-            } else {
-                shopBadge.textContent = 'No Shop Assigned';
-            }
-        }
-
-        // Fetch Products (RLS automatically enforces shop isolation)
+        // Fetch Products filtered by active shop_id
         async function fetchProducts() {
             const { data: products, error } = await supabaseClient
                 .from('products')
                 .select('*')
+                .eq('shop_id', currentShopId)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -196,7 +203,7 @@
             }
 
             productGrid.innerHTML = '';
-            if (products.length === 0) {
+            if (!products || products.length === 0) {
                 productGrid.innerHTML = '<p class="text-gray-400 text-sm">No items in inventory. Add one above!</p>';
                 return;
             }
@@ -280,7 +287,6 @@
 
             let totalAmount = cart.reduce((acc, item) => acc + (item.selling_price * item.qty), 0);
 
-            // Insert into Sales table
             const { error } = await supabaseClient
                 .from('sales')
                 .insert([{ shop_id: currentShopId, total_amount: totalAmount, payment_method: 'CASH' }]);
@@ -291,10 +297,11 @@
                 alert('Sale completed successfully!');
                 cart = [];
                 renderCart();
+                fetchProducts();
             }
         });
 
-        // Initialize App Check
+        // Initialize App Check on Load
         checkUserSession();
     </script>
 </body>
