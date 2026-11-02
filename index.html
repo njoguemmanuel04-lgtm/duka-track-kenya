@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DukaPOS - Kenya Duka Manager</title>
+    <title>DUKATRACK - Smart Shop Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,7 +17,7 @@
                 <i class="fa-solid fa-store text-lg"></i>
             </div>
             <div>
-                <h1 class="font-bold text-gray-800 text-lg leading-none">DukaPOS</h1>
+                <h1 class="font-bold text-gray-800 text-lg leading-none tracking-wide">DUKATRACK</h1>
                 <span id="networkStatus" class="text-xs font-semibold text-emerald-600">● Offline Ready</span>
             </div>
         </div>
@@ -130,8 +130,8 @@
                         <i class="fa-solid fa-store"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-800 text-base">My Kenya Duka</h3>
-                        <p class="text-xs text-gray-500">Location: Local Branch • Offline Mode Enabled</p>
+                        <h3 class="font-bold text-gray-800 text-base">DUKATRACK Shop</h3>
+                        <p class="text-xs text-gray-500">Location: Kenya • Offline Mode Enabled</p>
                     </div>
                 </div>
                 <div class="space-y-2 text-sm text-gray-700">
@@ -367,7 +367,7 @@
 
         function resetLocalData() {
             if (confirm("Are you sure you want to reset local storage database?")) {
-                Dexative.delete("DukaPOS_DB").then(() => {
+                Dexie.delete("DukaPOS_DB").then(() => {
                     location.reload();
                 });
             }
@@ -376,6 +376,21 @@
         function triggerSync() {
             alert("All local sales records are synced!");
         }
+
+        // Online / Offline Status Detection
+        function updateOnlineStatus() {
+            const statusElem = document.getElementById('networkStatus');
+            if (navigator.onLine) {
+                statusElem.innerHTML = '● Online (Auto-Syncing)';
+                statusElem.className = 'text-xs font-semibold text-emerald-600';
+            } else {
+                statusElem.innerHTML = '● Offline Mode';
+                statusElem.className = 'text-xs font-semibold text-amber-600';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
     </script>
 </body>
 </html>
