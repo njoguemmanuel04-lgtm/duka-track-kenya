@@ -3,223 +3,307 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUKATRACK - Smart Shop Manager</title>
+    <title>DUKATRACK - Smart Shop System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 font-sans pb-24">
+<body class="bg-emerald-900 font-sans min-h-screen">
 
-    <!-- ================= LOGIN / REGISTER MODAL ================= -->
-    <div id="authModal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
-            <div class="text-center">
-                <div class="bg-emerald-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-2 text-2xl shadow-md">
-                    <i class="fa-solid fa-store"></i>
+    <!-- ================= 1. LANDING / SHOP DIRECTORY VIEW ================= -->
+    <div id="view-landing" class="p-4 max-w-md mx-auto space-y-4">
+        
+        <!-- BRANDING HEADER CARD -->
+        <div class="bg-white rounded-3xl p-5 shadow-lg space-y-3 text-center">
+            <div class="flex justify-center items-center gap-3">
+                <div class="bg-emerald-100 text-emerald-700 p-3 rounded-2xl text-2xl">
+                    <i class="fa-solid fa-store text-emerald-600"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800">DUKATRACK</h3>
-                <p class="text-xs text-gray-500">Enter your shop details to continue</p>
+                <div class="text-left">
+                    <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight leading-none">DUKATRACK</h1>
+                    <p class="text-xs font-semibold text-gray-500 mt-1">Smart Duka System — Multi-Tenant</p>
+                </div>
             </div>
 
-            <form onsubmit="handleLogin(event)" class="space-y-3">
-                <div>
-                    <label class="text-xs font-semibold text-gray-600 block mb-1">Phone Number</label>
-                    <input type="tel" id="loginPhone" placeholder="e.g. 0712345678" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-emerald-600">
+            <!-- CATEGORY BADGES -->
+            <div class="grid grid-cols-4 gap-2 pt-2">
+                <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
+                    <span class="text-xl">🌾</span>
+                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Feeds</span>
                 </div>
-
-                <div>
-                    <label class="text-xs font-semibold text-gray-600 block mb-1">Shop Name</label>
-                    <input type="text" id="loginShopName" placeholder="e.g. Mwea Fresh Duka" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-emerald-600">
+                <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
+                    <span class="text-xl">🛒</span>
+                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Retail</span>
                 </div>
-
-                <div>
-                    <label class="text-xs font-semibold text-gray-600 block mb-1">4-Digit PIN</label>
-                    <input type="password" id="loginPin" maxlength="4" placeholder="••••" required class="w-full border rounded-xl px-3 py-2 text-sm text-center tracking-widest focus:outline-emerald-600">
+                <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
+                    <span class="text-xl">🌱</span>
+                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Agrovet</span>
                 </div>
+                <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
+                    <span class="text-xl">📦</span>
+                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Stock</span>
+                </div>
+            </div>
+        </div>
 
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-all">
-                    Open My Shop Dashboard
+        <!-- REGISTERED SHOPS DIRECTORY LIST -->
+        <div class="bg-white rounded-3xl p-5 shadow-lg space-y-3">
+            <h2 class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-shop text-emerald-600"></i> Registered Shops
+            </h2>
+            <div id="shopDirectoryList" class="space-y-2">
+                <!-- Shops dynamically rendered here -->
+            </div>
+        </div>
+
+        <!-- CREATE NEW SHOP FORM -->
+        <div class="bg-white rounded-3xl p-5 shadow-lg space-y-3">
+            <h2 class="font-bold text-gray-800 text-base">Create New Shop</h2>
+            <form onsubmit="handleCreateShop(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-700 block mb-1">Shop Name *</label>
+                    <input type="text" id="newShopName" placeholder="e.g. Wang'uru Agrovet" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-700 block mb-1">Phone *</label>
+                    <input type="tel" id="newShopPhone" placeholder="07..." required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-700 block mb-1">Location</label>
+                    <input type="text" id="newShopLocation" placeholder="Mwea, Wang'uru" class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-700 block mb-1">Shop Password / PIN *</label>
+                    <input type="password" id="newShopPin" placeholder="Enter PIN" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-plus text-xs"></i> Create Shop & Enter
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- TOP HEADER -->
-    <header class="bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex justify-between items-center">
-        <div class="flex items-center space-x-2">
-            <div class="bg-emerald-600 text-white p-2 rounded-lg">
-                <i class="fa-solid fa-store text-lg"></i>
+
+    <!-- ================= 2. ACTIVE SHOP POS DASHBOARD (HIDDEN INITIALLY) ================= -->
+    <div id="view-app" class="hidden bg-gray-100 min-h-screen pb-24">
+        
+        <!-- TOP HEADER -->
+        <header class="bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="bg-emerald-600 text-white p-2 rounded-lg">
+                    <i class="fa-solid fa-store text-lg"></i>
+                </div>
+                <div>
+                    <h1 id="headerActiveShopName" class="font-bold text-gray-800 text-base leading-none tracking-wide">Mwea Shop</h1>
+                    <span id="networkStatus" class="text-xs font-semibold text-emerald-600">● Online (Auto-Syncing)</span>
+                </div>
             </div>
-            <div>
-                <h1 id="headerShopName" class="font-bold text-gray-800 text-base leading-none tracking-wide">DUKATRACK</h1>
-                <span id="networkStatus" class="text-xs font-semibold text-emerald-600">● Offline Ready</span>
+            <div class="flex items-center space-x-3">
+                <button onclick="triggerSync()" class="p-2 text-gray-600 hover:text-emerald-600 text-sm flex items-center gap-1 bg-gray-100 rounded-lg">
+                    <i class="fa-solid fa-rotate"></i> Sync
+                </button>
+                <i class="fa-solid fa-bell text-gray-500 text-lg"></i>
             </div>
-        </div>
-        <div class="flex items-center space-x-3">
-            <button onclick="triggerSync()" class="p-2 text-gray-600 hover:text-emerald-600 text-sm flex items-center gap-1 bg-gray-100 rounded-lg">
-                <i class="fa-solid fa-rotate"></i> Sync
+        </header>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <main class="p-4 max-w-md mx-auto space-y-5">
+
+            <!-- DASHBOARD TAB -->
+            <div id="tab-dashboard" class="space-y-5">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">Dashboard</h2>
+                    <button onclick="quickSaleModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> New Sale
+                    </button>
+                </div>
+
+                <!-- MAIN SALES CARD -->
+                <div class="bg-emerald-100/70 border border-emerald-200 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center space-x-1 text-emerald-800 text-xs font-medium mb-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                        <span>Sales Today</span>
+                    </div>
+                    <div id="salesToday" class="text-3xl font-extrabold text-gray-900 mb-3">Ksh 0</div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white rounded-xl p-3 shadow-sm">
+                            <div class="flex items-center text-emerald-700 text-xs mb-1">
+                                <i class="fa-solid fa-receipt mr-1"></i> Orders
+                            </div>
+                            <div id="orderCount" class="text-xl font-bold text-gray-800">0</div>
+                        </div>
+                        <div class="bg-white rounded-xl p-3 shadow-sm">
+                            <div class="flex items-center text-emerald-700 text-xs mb-1">
+                                <i class="fa-solid fa-chart-simple mr-1"></i> Avg Order
+                            </div>
+                            <div id="avgOrder" class="text-xl font-bold text-gray-800">Ksh 0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAYMENT BREAKDOWN -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 text-sm">Payment Breakdown</h3>
+                        <span class="text-xs text-gray-400">Today</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-gray-50 p-2 rounded-lg border">
+                            <div class="text-xs text-gray-500">M-Pesa</div>
+                            <div id="mpesaSales" class="font-bold text-gray-800 text-sm">Ksh 0</div>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded-lg border">
+                            <div class="text-xs text-gray-500">Cash</div>
+                            <div id="cashSales" class="font-bold text-gray-800 text-sm">Ksh 0</div>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded-lg border">
+                            <div class="text-xs text-gray-500">Debt (Mkopo)</div>
+                            <div id="creditSales" class="font-bold text-red-600 text-sm">Ksh 0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INVENTORY PREVIEW -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 text-base">Inventory Preview</h3>
+                        <button onclick="switchTab('inventory')" class="text-xs font-semibold text-emerald-600 hover:underline">View all</button>
+                    </div>
+                    <div id="dashboardProductList" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- SALES HISTORY TAB -->
+            <div id="tab-sales" class="space-y-4 hidden">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">Sales History</h2>
+                    <button onclick="quickSaleModal()" class="bg-emerald-600 text-white text-xs font-bold py-2 px-3 rounded-lg">+ New Sale</button>
+                </div>
+                <div id="salesHistoryList" class="space-y-2"></div>
+            </div>
+
+            <!-- INVENTORY TAB -->
+            <div id="tab-inventory" class="space-y-4 hidden">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">Manage Inventory</h2>
+                    <button onclick="addNewProductPrompt()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Add Product
+                    </button>
+                </div>
+                <div id="fullInventoryList" class="space-y-2"></div>
+            </div>
+
+            <!-- PROFILE TAB -->
+            <div id="tab-profile" class="space-y-4 hidden">
+                <h2 class="text-xl font-bold text-gray-800">Shop Profile</h2>
+                <div class="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+                    <div class="flex items-center space-x-3 border-b pb-4">
+                        <div class="bg-emerald-100 text-emerald-700 p-3 rounded-full text-xl font-bold">
+                            <i class="fa-solid fa-store"></i>
+                        </div>
+                        <div>
+                            <h3 id="profileShopName" class="font-bold text-gray-800 text-base">My Shop</h3>
+                            <p id="profileShopLocation" class="text-xs text-gray-500">Location: Mwea</p>
+                        </div>
+                    </div>
+                    <button onclick="exitToDirectory()" class="w-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold py-2.5 rounded-xl hover:bg-emerald-100">
+                        ← Exit to Shop Directory
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- BOTTOM NAVIGATION BAR -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center max-w-md mx-auto z-40 shadow-lg">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center text-emerald-600 transition-colors">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-xs font-medium">Dashboard</span>
             </button>
-            <i class="fa-solid fa-bell text-gray-500 text-lg"></i>
-        </div>
-    </header>
-
-    <!-- MAIN CONTAINER (SWITCHABLE VIEWS) -->
-    <main class="p-4 max-w-md mx-auto space-y-5">
-
-        <!-- ================= 1. DASHBOARD VIEW ================= -->
-        <div id="view-dashboard" class="space-y-5">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-bold text-gray-800">Dashboard</h2>
-                <button onclick="quickSaleModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm flex items-center gap-1">
-                    <i class="fa-solid fa-plus"></i> New Sale
-                </button>
-            </div>
-
-            <!-- MAIN SALES CARD -->
-            <div class="bg-emerald-100/70 border border-emerald-200 rounded-2xl p-4 shadow-sm">
-                <div class="flex items-center space-x-1 text-emerald-800 text-xs font-medium mb-1">
-                    <i class="fa-solid fa-arrow-trend-up"></i>
-                    <span>Sales Today</span>
-                </div>
-                <div id="salesToday" class="text-3xl font-extrabold text-gray-900 mb-3">Ksh 0</div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white rounded-xl p-3 shadow-sm">
-                        <div class="flex items-center text-emerald-700 text-xs mb-1">
-                            <i class="fa-solid fa-receipt mr-1"></i> Orders
-                        </div>
-                        <div id="orderCount" class="text-xl font-bold text-gray-800">0</div>
-                    </div>
-                    <div class="bg-white rounded-xl p-3 shadow-sm">
-                        <div class="flex items-center text-emerald-700 text-xs mb-1">
-                            <i class="fa-solid fa-chart-simple mr-1"></i> Avg Order
-                        </div>
-                        <div id="avgOrder" class="text-xl font-bold text-gray-800">Ksh 0</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PAYMENT BREAKDOWN -->
-            <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-bold text-gray-800 text-sm">Payment Breakdown</h3>
-                    <span class="text-xs text-gray-400">Today</span>
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="bg-gray-50 p-2 rounded-lg border">
-                        <div class="text-xs text-gray-500">M-Pesa</div>
-                        <div id="mpesaSales" class="font-bold text-gray-800 text-sm">Ksh 0</div>
-                    </div>
-                    <div class="bg-gray-50 p-2 rounded-lg border">
-                        <div class="text-xs text-gray-500">Cash</div>
-                        <div id="cashSales" class="font-bold text-gray-800 text-sm">Ksh 0</div>
-                    </div>
-                    <div class="bg-gray-50 p-2 rounded-lg border">
-                        <div class="text-xs text-gray-500">Debt (Mkopo)</div>
-                        <div id="creditSales" class="font-bold text-red-600 text-sm">Ksh 0</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- INVENTORY PREVIEW WIDGET -->
-            <div class="space-y-3">
-                <div class="flex justify-between items-center">
-                    <h3 class="font-bold text-gray-800 text-base">Inventory Preview</h3>
-                    <button onclick="switchTab('inventory')" class="text-xs font-semibold text-emerald-600 hover:underline">View all</button>
-                </div>
-                <div id="dashboardProductList" class="space-y-2"></div>
-            </div>
-        </div>
-
-        <!-- ================= 2. SALES HISTORY VIEW ================= -->
-        <div id="view-sales" class="space-y-4 hidden">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-bold text-gray-800">Sales History</h2>
-                <button onclick="quickSaleModal()" class="bg-emerald-600 text-white text-xs font-bold py-2 px-3 rounded-lg">+ New Sale</button>
-            </div>
-            <div id="salesHistoryList" class="space-y-2"></div>
-        </div>
-
-        <!-- ================= 3. FULL INVENTORY VIEW ================= -->
-        <div id="view-inventory" class="space-y-4 hidden">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-bold text-gray-800">Manage Inventory</h2>
-                <button onclick="addNewProductPrompt()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm flex items-center gap-1">
-                    <i class="fa-solid fa-plus"></i> Add Product
-                </button>
-            </div>
-            <div id="fullInventoryList" class="space-y-2"></div>
-        </div>
-
-        <!-- ================= 4. PROFILE / SHOP SETTINGS VIEW ================= -->
-        <div id="view-profile" class="space-y-4 hidden">
-            <h2 class="text-xl font-bold text-gray-800">Shop Profile</h2>
-            <div class="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-                <div class="flex items-center space-x-3 border-b pb-4">
-                    <div class="bg-emerald-100 text-emerald-700 p-3 rounded-full text-xl font-bold">
-                        <i class="fa-solid fa-store"></i>
-                    </div>
-                    <div>
-                        <h3 id="profileShopName" class="font-bold text-gray-800 text-base">My Shop</h3>
-                        <p id="profilePhone" class="text-xs text-gray-500">Phone: --</p>
-                    </div>
-                </div>
-                <div class="space-y-2 text-sm text-gray-700">
-                    <div class="flex justify-between py-1 border-b">
-                        <span class="text-gray-500">Database Engine</span>
-                        <span class="font-semibold">IndexedDB (Offline Tenant)</span>
-                    </div>
-                    <div class="flex justify-between py-1 border-b">
-                        <span class="text-gray-500">Currency</span>
-                        <span class="font-semibold">KES (Ksh)</span>
-                    </div>
-                </div>
-                <button onclick="logoutShop()" class="w-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold py-2.5 rounded-xl hover:bg-amber-100">
-                    Switch / Logout Shop
-                </button>
-                <button onclick="resetLocalData()" class="w-full bg-red-50 text-red-600 border border-red-200 text-xs font-bold py-2.5 rounded-xl hover:bg-red-100">
-                    Reset Local Database Cache
-                </button>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- BOTTOM NAVIGATION BAR -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center max-w-md mx-auto z-40 shadow-lg">
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center text-emerald-600 transition-colors">
-            <i class="fa-solid fa-house text-lg"></i>
-            <span class="text-xs font-medium">Dashboard</span>
-        </button>
-        <button onclick="switchTab('sales')" id="nav-sales" class="flex flex-col items-center text-gray-400 hover:text-emerald-600 transition-colors">
-            <i class="fa-solid fa-receipt text-lg"></i>
-            <span class="text-xs font-medium">Sales</span>
-        </button>
-        <button onclick="switchTab('inventory')" id="nav-inventory" class="flex flex-col items-center text-gray-400 hover:text-emerald-600 transition-colors">
-            <i class="fa-solid fa-box text-lg"></i>
-            <span class="text-xs font-medium">Inventory</span>
-        </button>
-        <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center text-gray-400 hover:text-emerald-600 transition-colors">
-            <i class="fa-solid fa-user text-lg"></i>
-            <span class="text-xs font-medium">Profile</span>
-        </button>
-    </nav>
+            <button onclick="switchTab('sales')" id="nav-sales" class="flex flex-col items-center text-gray-400 hover:text-emerald-600 transition-colors">
+                <i class="fa-solid fa-receipt text-lg"></i>
+                <span class="text-xs font-medium">Sales</span>
+            </button>
+            <button onclick="switchTab('inventory')" id="nav-inventory" class="flex flex-col items-center text-gray-400 hover:text-emerald-600 transition-colors">
+                <i class="fa-solid fa-box text-lg"></i>
+                <span class="text-xs font-medium">Inventory</span>
+            </button>
+            <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center text-gray-400 hover:text-emerald-600 transition-colors">
+                <i class="fa-solid fa-user text-lg"></i>
+                <span class="text-xs font-medium">Profile</span>
+            </button>
+        </nav>
+    </div>
 
     <!-- JAVASCRIPT MULTI-TENANT ENGINE -->
     <script>
-        let db;
-        let currentShop = JSON.parse(localStorage.getItem('dukatrack_active_shop')) || null;
+        // System master shop registry stored locally
+        let registeredShops = JSON.parse(localStorage.getItem('dukatrack_shops_list')) || [
+            { name: "Dairy feeds", location: "Mwea", phone: "0711000001", id: "shop_1" },
+            { name: "Farmgate", location: "Wang'uru", phone: "0722000002", id: "shop_2" },
+            { name: "Wang'uru agrovet", location: "Mwea", phone: "0733000003", id: "shop_3" }
+        ];
 
-        function initDatabase() {
-            if (!currentShop) {
-                document.getElementById('authModal').classList.remove('hidden');
-                return;
-            }
-            document.getElementById('authModal').classList.add('hidden');
+        let activeShop = null;
+        let db = null;
 
-            // Create an isolated database per shop phone number
-            const dbName = `DukaTrack_${currentShop.phone}`;
-            db = new Dexie(dbName);
+        function saveShopsList() {
+            localStorage.setItem('dukatrack_shops_list', JSON.stringify(registeredShops));
+        }
+
+        function renderDirectory() {
+            const listElem = document.getElementById('shopDirectoryList');
+            listElem.innerHTML = '';
+
+            registeredShops.forEach(shop => {
+                listElem.innerHTML += `
+                    <div class="flex justify-between items-center p-3 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-gray-100 transition-all">
+                        <div>
+                            <div class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                                🔒 ${shop.name}
+                            </div>
+                            <div class="text-xs text-gray-400 font-medium">${shop.location || 'Mwea'}</div>
+                        </div>
+                        <button onclick="enterShop('${shop.id}')" class="text-xs font-bold text-emerald-700 bg-emerald-100/80 hover:bg-emerald-200 px-3 py-1.5 rounded-xl transition-all">
+                            Enter →
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function handleCreateShop(event) {
+            event.preventDefault();
+            const name = document.getElementById('newShopName').value.trim();
+            const phone = document.getElementById('newShopPhone').value.trim();
+            const location = document.getElementById('newShopLocation').value.trim() || "Mwea, Wang'uru";
+            const pin = document.getElementById('newShopPin').value.trim();
+
+            const shopId = 'shop_' + Date.now();
+            const newShop = { id: shopId, name, phone, location, pin };
+
+            registeredShops.push(newShop);
+            saveShopsList();
+            renderDirectory();
+
+            enterShop(shopId);
+        }
+
+        function enterShop(shopId) {
+            activeShop = registeredShops.find(s => s.id === shopId);
+            if (!activeShop) return;
+
+            // Hide Landing, Show POS Dashboard
+            document.getElementById('view-landing').classList.add('hidden');
+            document.getElementById('view-app').classList.remove('hidden');
+
+            document.getElementById('headerActiveShopName').innerText = activeShop.name;
+            document.getElementById('profileShopName').innerText = activeShop.name;
+            document.getElementById('profileShopLocation').innerText = `Location: ${activeShop.location}`;
+
+            // Initialize Dexie IndexedDB for THIS SPECIFIC SHOP
+            db = new Dexie(`DukaTrack_${activeShop.id}`);
             db.version(1).stores({
                 products: '++id, name, stock, unit, price, min_stock',
                 sales: '++id, total, method, synced, created_at'
@@ -234,47 +318,23 @@
                 ]);
             });
 
-            db.open().then(() => {
-                document.getElementById('headerShopName').innerText = currentShop.shopName;
-                document.getElementById('profileShopName').innerText = currentShop.shopName;
-                document.getElementById('profilePhone').innerText = `Phone: ${currentShop.phone}`;
-                loadAppData();
-            });
+            db.open().then(() => loadAppData());
         }
 
-        function handleLogin(event) {
-            event.preventDefault();
-            const phone = document.getElementById('loginPhone').value.trim();
-            const shopName = document.getElementById('loginShopName').value.trim();
-            const pin = document.getElementById('loginPin').value.trim();
-
-            if (pin.length !== 4) {
-                alert("Please enter a valid 4-digit PIN");
-                return;
-            }
-
-            currentShop = { phone, shopName, pin };
-            localStorage.setItem('dukatrack_active_shop', JSON.stringify(currentShop));
-            initDatabase();
+        function exitToDirectory() {
+            document.getElementById('view-app').classList.add('hidden');
+            document.getElementById('view-landing').classList.remove('hidden');
+            renderDirectory();
         }
-
-        function logoutShop() {
-            if (confirm("Switch or log out of this shop?")) {
-                localStorage.removeItem('dukatrack_active_shop');
-                location.reload();
-            }
-        }
-
-        initDatabase();
 
         // TAB SWITCHING LOGIC
         function switchTab(tabName) {
             ['dashboard', 'sales', 'inventory', 'profile'].forEach(tab => {
-                document.getElementById(`view-${tab}`).classList.add('hidden');
+                document.getElementById(`tab-${tab}`).classList.add('hidden');
                 document.getElementById(`nav-${tab}`).className = "flex flex-col items-center text-gray-400 hover:text-emerald-600 transition-colors";
             });
 
-            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
             document.getElementById(`nav-${tabName}`).className = "flex flex-col items-center text-emerald-600 font-bold transition-colors";
             
             loadAppData();
@@ -438,32 +498,13 @@
             document.getElementById('creditSales').innerText = `Ksh ${credit.toLocaleString()}`;
         }
 
-        function resetLocalData() {
-            if (confirm("Are you sure you want to reset local database cache for this shop?")) {
-                Dexie.delete(`DukaTrack_${currentShop.phone}`).then(() => {
-                    location.reload();
-                });
-            }
-        }
-
         function triggerSync() {
             alert("All local sales records for your shop are synced!");
         }
 
-        // Online / Offline Status Detection
-        function updateOnlineStatus() {
-            const statusElem = document.getElementById('networkStatus');
-            if (navigator.onLine) {
-                statusElem.innerHTML = '● Online (Auto-Syncing)';
-                statusElem.className = 'text-xs font-semibold text-emerald-600';
-            } else {
-                statusElem.innerHTML = '● Offline Mode';
-                statusElem.className = 'text-xs font-semibold text-amber-600';
-            }
-        }
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-        updateOnlineStatus();
+        // Initialize Landing Directory
+        saveShopsList();
+        renderDirectory();
     </script>
 </body>
 </html>
