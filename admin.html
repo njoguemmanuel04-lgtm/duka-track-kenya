@@ -99,14 +99,14 @@
         </main>
     </div>
 
-    <!-- SCRIPT LOGIC -->
+    <!-- SCRIPT LOGIC WITH YOUR SUPABASE KEYS -->
     <script>
         const SUPABASE_URL = 'https://torzbgvwjhthzuifdses.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcnpiZ3Z3amh0aHp1aWZkc2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyODQ4OTAsImV4cCI6MjEwODg2MDg5MH0.Jjzgt-mCxA94Y1lG6fLDLupteE8RZs6dygJO5BVClKY';
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // CHANGE THIS TO YOUR SECURE ADMIN PASSWORD
+        // MASTER PASSWORD FOR ADMIN LOGIN
         const MASTER_ADMIN_PASSWORD = 'AdminPassword123';
 
         const authContainer = document.getElementById('admin-auth-container');
@@ -117,7 +117,6 @@
         const createShopForm = document.getElementById('create-shop-form');
         const shopsTable = document.getElementById('admin-shops-table');
 
-        // Session check
         function checkAdminSession() {
             if (localStorage.getItem('duka_is_super_admin') === 'true') {
                 authContainer.classList.add('hidden');
@@ -147,9 +146,7 @@
             window.location.reload();
         });
 
-        // Load Platform Analytics & Shops Directory
         async function loadAdminData() {
-            // 1. Fetch all shops
             const { data: shops, error: shopsErr } = await supabaseClient
                 .from('shops')
                 .select('*')
@@ -181,7 +178,6 @@
                 });
             }
 
-            // 2. Fetch platform-wide sales analytics
             const { data: sales, error: salesErr } = await supabaseClient
                 .from('sales')
                 .select('total_amount, profit');
@@ -195,7 +191,6 @@
             }
         }
 
-        // Provision New Shop Action
         createShopForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const shop_name = document.getElementById('new-shop-name').value.trim();
@@ -214,13 +209,12 @@
             }
         });
 
-        // Delete Shop Action
         async function deleteShop(shopId) {
             if (!confirm('WARNING: Deleting this shop will permanently remove all its inventory and sales history. Proceed?')) return;
 
             const { error } = await supabaseClient.from('shops').delete().eq('id', shopId);
             if (error) {
-                alert('Error deleting shop: ' + error.message);
+                alert('Error deleting shop: ' + error.email);
             } else {
                 loadAdminData();
             }
