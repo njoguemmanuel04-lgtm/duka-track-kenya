@@ -3,192 +3,374 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Duka OS - Advanced POS & Inventory</title>
+    <title>DukaTrack - Smart Duka Management System</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS Client -->
+    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans antialiased">
+<body class="bg-gray-100 text-gray-900 font-sans antialiased pb-20">
 
-    <!-- AUTHENTICATION CONTAINER (PIN-Based Login) -->
-    <div id="auth-container" class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-            <div class="text-center mb-6">
-                <h1 class="text-3xl font-extrabold text-emerald-600">Duka Manager</h1>
-                <p class="text-sm text-gray-500 mt-1">Enter your Shop PIN to open the register</p>
+    <!-- AUTHENTICATION / LOGIN VIEW -->
+    <div id="auth-container" class="min-h-screen flex flex-col items-center justify-center p-4 bg-emerald-950">
+        <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-6 space-y-6">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold mb-2">🛒</div>
+                <h1 class="text-2xl font-black text-emerald-900">DUKATRACK</h1>
+                <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Smart Duka Management System</p>
             </div>
+
+            <!-- Login Form -->
             <form id="login-form" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-600">Shop Name</label>
-                    <input type="text" id="shop-query" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="e.g. Njogu Duka">
+                    <label class="block text-xs font-bold uppercase text-gray-600">Duka Name *</label>
+                    <input type="text" id="login-shop-name" placeholder="e.g. Mwea shop" required class="mt-1 w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm bg-gray-50">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-600">Shop PIN</label>
-                    <input type="password" id="shop-pin" maxlength="6" required class="mt-1 w-full px-4 py-2 border rounded-lg text-sm tracking-widest focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="••••">
+                    <label class="block text-xs font-bold uppercase text-gray-600">Duka PIN *</label>
+                    <input type="password" id="login-pin" maxlength="6" placeholder="••••" required class="mt-1 w-full px-4 py-3 border rounded-xl tracking-widest focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm bg-gray-50">
                 </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg transition duration-200">
-                    Open Register
+                <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3.5 rounded-xl transition shadow-lg text-sm">
+                    Open Duka Register
                 </button>
             </form>
-            <div id="auth-error" class="mt-4 text-center text-sm text-red-500 font-medium"></div>
+
+            <div class="border-t pt-4 text-center">
+                <p class="text-xs text-gray-500 mb-2">Don't have a shop registered yet?</p>
+                <button onclick="toggleAuthMode('register')" class="text-xs text-emerald-700 font-bold hover:underline">Register New Duka Here</button>
+            </div>
+            <div id="auth-error" class="text-center text-xs text-red-500 font-semibold"></div>
         </div>
     </div>
 
-    <!-- MAIN APP CONTAINER (Hidden until logged in) -->
-    <div id="app-container" class="hidden min-h-screen flex flex-col">
-        <!-- Top Navbar -->
-        <header class="bg-emerald-700 text-white shadow">
-            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <span class="text-xl font-bold tracking-tight">🛒 Duka OS</span>
-                    <span id="shop-name-badge" class="bg-emerald-800 text-emerald-200 text-xs px-2.5 py-1 rounded-full font-medium">Loading...</span>
+    <!-- REGISTRATION VIEW (Hidden by default) -->
+    <div id="register-container" class="hidden min-h-screen flex flex-col items-center justify-center p-4 bg-emerald-950">
+        <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-6 space-y-6">
+            <div class="text-center">
+                <h1 class="text-2xl font-black text-emerald-900">Register New Duka</h1>
+                <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Create cloud account</p>
+            </div>
+            <form id="register-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Duka Name *</label>
+                    <input type="text" id="reg-name" placeholder="Mwea shop" required class="mt-1 w-full px-3 py-2.5 border rounded-xl text-sm bg-gray-50">
                 </div>
-                <div class="flex items-center space-x-3">
-                    <button onclick="switchTab('pos')" id="tab-pos-btn" class="bg-emerald-800 text-xs px-3 py-1.5 rounded font-semibold transition">POS & Stock</button>
-                    <button onclick="switchTab('reports')" id="tab-rep-btn" class="bg-emerald-900/50 text-xs px-3 py-1.5 rounded font-semibold transition">Reports & Profit</button>
-                    <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-xs px-3 py-1.5 rounded font-semibold transition">Lock</button>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Phone *</label>
+                    <input type="text" id="reg-phone" placeholder="0712345678" required class="mt-1 w-full px-3 py-2.5 border rounded-xl text-sm bg-gray-50">
                 </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Location</label>
+                    <input type="text" id="reg-location" placeholder="Mwea" class="mt-1 w-full px-3 py-2.5 border rounded-xl text-sm bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Duka PIN *</label>
+                    <input type="password" id="reg-pin" maxlength="6" placeholder="••••" required class="mt-1 w-full px-3 py-2.5 border rounded-xl tracking-widest text-sm bg-gray-50">
+                </div>
+                <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl transition shadow text-sm">
+                    + Register & Open Duka
+                </button>
+            </form>
+            <div class="text-center pt-2">
+                <button onclick="toggleAuthMode('login')" class="text-xs text-emerald-700 font-bold hover:underline">← Back to Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP DASHBOARD -->
+    <div id="app-container" class="hidden max-w-md mx-auto min-h-screen flex flex-col bg-gray-100">
+        
+        <!-- Top Header Bar -->
+        <header class="bg-white px-4 py-3 border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
+            <div class="flex items-center space-x-2">
+                <div class="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold">🛒</div>
+                <div>
+                    <h2 id="header-shop-name" class="font-black text-gray-900 text-sm">Shop Name</h2>
+                    <p class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">● Online (Auto-Syncing)</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="alert('Scanner module active')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2.5 py-1.5 rounded-lg font-semibold flex items-center gap-1">📷 Scan</button>
+                <a href="https://wa.me/?text=Hello%20from%20DukaTrack" target="_blank" class="bg-emerald-50 text-emerald-600 p-2 rounded-lg text-xs">💬</a>
             </div>
         </header>
 
-        <!-- Main Workspace -->
-        <main class="flex-1 max-w-7xl w-full mx-auto p-4">
+        <!-- Main Scrollable Content -->
+        <main class="flex-1 p-4 space-y-4">
             
-            <!-- VIEW 1: POS & INVENTORY TAB -->
-            <div id="view-pos" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Left 2 Cols: Add Item & Inventory Grid -->
-                <div class="lg:col-span-2 space-y-6">
-                    <!-- Add Product Form -->
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold text-gray-800 mb-3">Add Inventory & Set Profit Margins</h2>
-                        <form id="add-product-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                            <input type="text" id="prod-name" placeholder="Item Name" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
-                            <input type="number" step="0.01" id="prod-buying" placeholder="Buying Price" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
-                            <input type="number" step="0.01" id="prod-price" placeholder="Selling Price" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
-                            <input type="number" id="prod-qty" placeholder="Stock Qty" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
-                            <button type="submit" class="sm:col-span-4 bg-gray-900 hover:bg-black text-white text-sm font-semibold py-2.5 rounded-lg transition">Save to Inventory</button>
-                        </form>
-                    </div>
+            <!-- Low Stock Warning Banner -->
+            <div id="stock-warning-banner" class="hidden bg-amber-400 text-amber-950 px-4 py-3 rounded-2xl flex justify-between items-center shadow-sm">
+                <span class="text-xs font-bold flex items-center gap-1.5">⚠️ <span id="low-stock-text">1 product low in stock!</span></span>
+                <button onclick="switchTab('inventory')" class="bg-white text-amber-950 font-black text-xs px-3 py-1.5 rounded-xl shadow-sm">RESTOCK</button>
+            </div>
 
-                    <!-- Product Catalog -->
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                        <h2 class="text-lg font-bold text-gray-800 mb-4">Shop Inventory (Click item to add to sale cart)</h2>
-                        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                            <p class="text-gray-400 text-sm">Loading inventory...</p>
+            <!-- DASHBOARD TAB -->
+            <div id="tab-dashboard" class="space-y-4">
+                
+                <!-- Sales Today Card -->
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-emerald-100 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">📈 Sales Today</span>
+                        <button onclick="openNewSaleModal()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow">+ New Sale</button>
+                    </div>
+                    <div>
+                        <h1 id="dash-total-sales" class="text-3xl font-black text-gray-900">Ksh 0</h1>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 pt-2 border-t">
+                        <div class="bg-gray-50 p-2.5 rounded-2xl text-center">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Profit Today</p>
+                            <p id="dash-total-profit" class="text-xs font-black text-emerald-600 mt-0.5">Ksh 0</p>
+                        </div>
+                        <div class="bg-gray-50 p-2.5 rounded-2xl text-center">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Orders</p>
+                            <p id="dash-orders-count" class="text-xs font-black text-gray-800 mt-0.5">0</p>
+                        </div>
+                        <div class="bg-gray-50 p-2.5 rounded-2xl text-center">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">Avg Order</p>
+                            <p id="dash-avg-order" class="text-xs font-black text-gray-800 mt-0.5">Ksh 0</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right Col: Cart & Checkout -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
-                    <div>
-                        <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Active Cart</h2>
-                        <div id="cart-items" class="space-y-3 max-h-80 overflow-y-auto pr-1">
-                            <p class="text-gray-400 text-sm italic">Cart is empty</p>
+                <!-- Payment Breakdown Card -->
+                <div class="bg-white p-4 rounded-3xl shadow-sm border space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-gray-700 uppercase tracking-wider">Payment Breakdown</span>
+                        <span class="text-[10px] text-gray-400 font-bold">Today</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-gray-50 p-3 rounded-2xl">
+                            <p class="text-[10px] text-gray-400 font-bold">M-Pesa</p>
+                            <p id="pay-mpesa" class="text-xs font-black text-gray-800 mt-1">Ksh 0</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-2xl">
+                            <p class="text-[10px] text-gray-400 font-bold">Cash</p>
+                            <p id="pay-cash" class="text-xs font-black text-gray-800 mt-1">Ksh 0</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-2xl">
+                            <p class="text-[10px] text-gray-400 font-bold">Debt (Mkopo)</p>
+                            <p id="pay-debt" class="text-xs font-black text-red-500 mt-1">Ksh 0</p>
                         </div>
                     </div>
+                </div>
 
-                    <div class="mt-6 border-t pt-4">
-                        <div class="flex justify-between items-center mb-1 text-sm text-gray-500">
-                            <span>Estimated Profit:</span>
-                            <span id="cart-profit" class="font-semibold text-emerald-600">KES 0.00</span>
-                        </div>
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="text-base font-semibold text-gray-800">Total:</span>
-                            <span id="cart-total" class="text-2xl font-black text-emerald-600">KES 0.00</span>
-                        </div>
-                        <button id="checkout-cash-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-md">
-                            Complete Cash Sale
-                        </button>
+                <!-- Shop Expenses (Matumizi) -->
+                <div class="bg-white p-4 rounded-3xl shadow-sm border flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1">📋 Shop Expenses (Matumizi)</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Today's Total: <span id="dash-expense-total" class="font-black text-gray-800">Ksh 0</span></p>
+                    </div>
+                    <button onclick="addExpensePrompt()" class="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold px-3 py-2 rounded-xl">+ Add Expense</button>
+                </div>
+
+                <!-- Inventory Preview -->
+                <div class="bg-white p-4 rounded-3xl shadow-sm border space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-gray-700 uppercase tracking-wider">Inventory Preview</span>
+                        <button onclick="switchTab('inventory')" class="text-xs text-emerald-600 font-bold">View all</button>
+                    </div>
+                    <div id="dash-inventory-list" class="space-y-2">
+                        <p class="text-xs text-gray-400 italic">Loading inventory...</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SALES TAB -->
+            <div id="tab-sales" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-3xl shadow-sm border">
+                    <h2 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Sales History</h2>
+                    <div id="sales-history-list" class="space-y-2">
+                        <p class="text-xs text-gray-400 italic">No sales recorded yet.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- VIEW 2: REPORTS & PROFIT TRACKER TAB -->
-            <div id="view-reports" class="hidden space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                        <p class="text-xs uppercase font-bold text-gray-400">Total Revenue</p>
-                        <h3 id="rep-total-revenue" class="text-3xl font-black text-gray-900 mt-1">KES 0.00</h3>
+            <!-- INVENTORY TAB -->
+            <div id="tab-inventory" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-3xl shadow-sm border space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Stock Catalog</h2>
+                        <button onclick="openAddProductModal()" class="bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl">+ Add Item</button>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                        <p class="text-xs uppercase font-bold text-gray-400">Total Gross Profit</p>
-                        <h3 id="rep-total-profit" class="text-3xl font-black text-emerald-600 mt-1">KES 0.00</h3>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                        <p class="text-xs uppercase font-bold text-gray-400">Transactions Recorded</p>
-                        <h3 id="rep-total-sales-count" class="text-3xl font-black text-blue-600 mt-1">0</h3>
+                    <div id="full-inventory-list" class="space-y-2">
+                        <p class="text-xs text-gray-400 italic">Loading catalog...</p>
                     </div>
                 </div>
+            </div>
 
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4">Sales History Log</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-gray-600">
-                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
-                                <tr>
-                                    <th class="p-3">Time</th>
-                                    <th class="p-3">Method</th>
-                                    <th class="p-3">Amount</th>
-                                    <th class="p-3">Profit Earned</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sales-history-table">
-                                <tr><td colspan="4" class="p-4 text-center text-gray-400">Loading sales history...</td></tr>
-                            </tbody>
-                        </table>
+            <!-- PROFILE TAB -->
+            <div id="tab-profile" class="hidden space-y-4">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border text-center space-y-4">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-3xl mx-auto flex items-center justify-center text-3xl font-black">🏪</div>
+                    <div>
+                        <h2 id="profile-shop-name" class="text-lg font-black text-gray-900">Shop Name</h2>
+                        <p id="profile-shop-location" class="text-xs text-gray-400">Location</p>
                     </div>
+                    <div class="border-t pt-4 space-y-2 text-left">
+                        <p class="text-xs font-bold text-gray-600">Phone: <span id="profile-shop-phone" class="font-normal text-gray-800"></span></p>
+                        <p class="text-xs font-bold text-gray-600">Cloud Sync: <span class="text-green-600 font-bold">Active</span></p>
+                    </div>
+                    <button onclick="logoutShop()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition text-xs">
+                        Lock / Switch Register
+                    </button>
                 </div>
             </div>
 
         </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bg-white border-t fixed bottom-0 max-w-md w-full grid grid-cols-4 py-2 text-center text-xs text-gray-400 z-50">
+            <button onclick="switchTab('dashboard')" id="nav-btn-dashboard" class="flex flex-col items-center text-emerald-600 font-bold">
+                <span class="text-lg">🏠</span>
+                Dashboard
+            </button>
+            <button onclick="switchTab('sales')" id="nav-btn-sales" class="flex flex-col items-center hover:text-gray-700">
+                <span class="text-lg">📋</span>
+                Sales
+            </button>
+            <button onclick="switchTab('inventory')" id="nav-btn-inventory" class="flex flex-col items-center hover:text-gray-700">
+                <span class="text-lg">📦</span>
+                Inventory
+            </button>
+            <button onclick="switchTab('profile')" id="nav-btn-profile" class="flex flex-col items-center hover:text-gray-700">
+                <span class="text-lg">👤</span>
+                Profile
+            </button>
+        </nav>
     </div>
 
-    <!-- SCRIPT LOGIC -->
+    <!-- NEW SALE MODAL -->
+    <div id="sale-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-gray-900 text-sm">Record New Sale</h3>
+                <button onclick="closeModals()" class="text-gray-400 font-bold text-sm">✕</button>
+            </div>
+            <form id="sale-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Select Product *</label>
+                    <select id="sale-product-select" required class="w-full px-3 py-2 border rounded-xl text-sm bg-gray-50"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Quantity Sold *</label>
+                    <input type="number" id="sale-qty" value="1" min="1" required class="w-full px-3 py-2 border rounded-xl text-sm bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Payment Method *</label>
+                    <select id="sale-method" class="w-full px-3 py-2 border rounded-xl text-sm bg-gray-50">
+                        <option value="Cash">Cash</option>
+                        <option value="M-Pesa">M-Pesa</option>
+                        <option value="Debt">Debt (Mkopo)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl text-sm shadow">
+                    Complete Sale
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD PRODUCT MODAL -->
+    <div id="product-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-gray-900 text-sm">Add Inventory Item</h3>
+                <button onclick="closeModals()" class="text-gray-400 font-bold text-sm">✕</button>
+            </div>
+            <form id="product-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Item Name *</label>
+                    <input type="text" id="prod-name" placeholder="e.g. Ugali Flour" required class="w-full px-3 py-2 border rounded-xl text-sm bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Buying Price (Ksh) *</label>
+                    <input type="number" step="0.01" id="prod-buying" placeholder="150" required class="w-full px-3 py-2 border rounded-xl text-sm bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Selling Price (Ksh) *</label>
+                    <input type="number" step="0.01" id="prod-selling" placeholder="180" required class="w-full px-3 py-2 border rounded-xl text-sm bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600">Stock Quantity *</label>
+                    <input type="number" id="prod-qty" placeholder="20" required class="w-full px-3 py-2 border rounded-xl text-sm bg-gray-50">
+                </div>
+                <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl text-sm shadow">
+                    Save Item to Stock
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
     <script>
         const SUPABASE_URL = 'https://torzbgvwjhthzuifdses.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcnpiZ3Z3amh0aHp1aWZkc2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyODQ4OTAsImV4cCI6MjEwODg2MDg5MH0.Jjzgt-mCxA94Y1lG6fLDLupteE8RZs6dygJO5BVClKY';
-        
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let currentShopId = null;
-        let cart = [];
+        let activeShop = null;
         let productsCache = [];
 
-        // DOM Elements
-        const authContainer = document.getElementById('auth-container');
-        const appContainer = document.getElementById('app-container');
-        const loginForm = document.getElementById('login-form');
-        const authError = document.getElementById('auth-error');
-        const logoutBtn = document.getElementById('logout-btn');
-        const shopBadge = document.getElementById('shop-name-badge');
-        const productGrid = document.getElementById('product-grid');
-        const addProductForm = document.getElementById('add-product-form');
-        const cartItemsContainer = document.getElementById('cart-items');
-        const cartTotalDisplay = document.getElementById('cart-total');
-        const cartProfitDisplay = document.getElementById('cart-profit');
-        const checkoutCashBtn = document.getElementById('checkout-cash-btn');
+        // Session Check on Load
+        function checkSession() {
+            const shopId = localStorage.getItem('duka_active_shop_id');
+            const shopName = localStorage.getItem('duka_active_shop_name');
+            const shopPhone = localStorage.getItem('duka_active_shop_phone');
+            const shopLoc = localStorage.getItem('duka_active_shop_location');
 
-        function checkUserSession() {
-            const savedShopId = localStorage.getItem('duka_active_shop_id');
-            const savedShopName = localStorage.getItem('duka_active_shop_name');
-
-            if (savedShopId && savedShopName) {
-                currentShopId = savedShopId;
-                enterDashboard(savedShopName);
+            if (shopId && shopName) {
+                activeShop = { id: shopId, shop_name: shopName, phone: shopPhone, location: shopLoc };
+                enterDashboard();
             } else {
-                authContainer.classList.remove('hidden');
-                appContainer.classList.add('hidden');
+                document.getElementById('auth-container').classList.remove('hidden');
             }
         }
 
-        loginForm.addEventListener('submit', async (e) => {
+        // Toggle Auth views
+        function toggleAuthMode(mode) {
+            if (mode === 'register') {
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('register-container').classList.remove('hidden');
+            } else {
+                document.getElementById('register-container').classList.add('hidden');
+                document.getElementById('auth-container').classList.remove('hidden');
+            }
+        }
+
+        // Register New Shop
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            authError.textContent = '';
-            
-            const shopQuery = document.getElementById('shop-query').value.trim();
-            const pinInput = document.getElementById('shop-pin').value.trim();
+            const shop_name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const location = document.getElementById('reg-location').value.trim();
+            const pin = document.getElementById('reg-pin').value.trim();
+
+            const { data, error } = await supabaseClient
+                .from('shops')
+                .insert([{ shop_name, phone, location, pin }])
+                .select();
+
+            if (error) {
+                alert('Registration failed: ' + error.message);
+                return;
+            }
+
+            const newShop = data[0];
+            localStorage.setItem('duka_active_shop_id', newShop.id);
+            localStorage.setItem('duka_active_shop_name', newShop.shop_name);
+            localStorage.setItem('duka_active_shop_phone', newShop.phone || '');
+            localStorage.setItem('duka_active_shop_location', newShop.location || '');
+
+            activeShop = newShop;
+            document.getElementById('register-container').classList.add('hidden');
+            enterDashboard();
+        });
+
+        // Login with PIN
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const shopQuery = document.getElementById('login-shop-name').value.trim();
+            const pinInput = document.getElementById('login-pin').value.trim();
 
             const { data: shops, error } = await supabaseClient
                 .from('shops')
@@ -198,259 +380,316 @@
                 .limit(1);
 
             if (error || !shops || shops.length === 0) {
-                authError.textContent = 'Invalid Shop Name or PIN!';
+                document.getElementById('auth-error').textContent = 'Invalid Duka Name or PIN!';
                 return;
             }
 
             const shop = shops[0];
-            currentShopId = shop.id;
             localStorage.setItem('duka_active_shop_id', shop.id);
             localStorage.setItem('duka_active_shop_name', shop.shop_name);
+            localStorage.setItem('duka_active_shop_phone', shop.phone || '');
+            localStorage.setItem('duka_active_shop_location', shop.location || '');
 
-            enterDashboard(shop.shop_name);
+            activeShop = shop;
+            document.getElementById('auth-container').classList.add('hidden');
+            enterDashboard();
         });
 
-        function enterDashboard(shopName) {
-            authContainer.classList.add('hidden');
-            appContainer.classList.remove('hidden');
-            shopBadge.textContent = shopName;
-            fetchProducts();
-            fetchReports();
+        function enterDashboard() {
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('header-shop-name').textContent = activeShop.shop_name;
+            document.getElementById('profile-shop-name').textContent = activeShop.shop_name;
+            document.getElementById('profile-shop-location').textContent = activeShop.location || 'Kenya';
+            document.getElementById('profile-shop-phone').textContent = activeShop.phone || 'N/A';
+            
+            loadDashboardData();
         }
 
-        logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('duka_active_shop_id');
-            localStorage.removeItem('duka_active_shop_name');
+        function logoutShop() {
+            localStorage.clear();
             window.location.reload();
-        });
-
-        function switchTab(tab) {
-            const posView = document.getElementById('view-pos');
-            const repView = document.getElementById('view-reports');
-            const posBtn = document.getElementById('tab-pos-btn');
-            const repBtn = document.getElementById('tab-rep-btn');
-
-            if (tab === 'pos') {
-                posView.classList.remove('hidden');
-                repView.classList.add('hidden');
-                posBtn.className = 'bg-emerald-800 text-xs px-3 py-1.5 rounded font-semibold transition';
-                repBtn.className = 'bg-emerald-900/50 text-xs px-3 py-1.5 rounded font-semibold transition';
-            } else {
-                posView.classList.add('hidden');
-                repView.classList.remove('hidden');
-                repBtn.className = 'bg-emerald-800 text-xs px-3 py-1.5 rounded font-semibold transition';
-                posBtn.className = 'bg-emerald-900/50 text-xs px-3 py-1.5 rounded font-semibold transition';
-                fetchReports();
-            }
         }
 
-        async function fetchProducts() {
-            const { data: products, error } = await supabaseClient
+        // Tab Switching
+        function switchTab(tab) {
+            ['dashboard', 'sales', 'inventory', 'profile'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-btn-${t}`).className = 'flex flex-col items-center text-gray-400 hover:text-gray-700';
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-btn-${tab}`).className = 'flex flex-col items-center text-emerald-600 font-bold';
+
+            if (tab === 'inventory') loadInventory();
+            if (tab === 'sales') loadSalesHistory();
+            if (tab === 'dashboard') loadDashboardData();
+        }
+
+        // Load Dashboard Data & Metrics
+        async function loadDashboardData() {
+            // 1. Fetch Products for Inventory Preview & Low stock check
+            const { data: products } = await supabaseClient
                 .from('products')
                 .select('*')
-                .eq('shop_name_id', currentShopId)
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('Error fetching products:', error);
-                return;
-            }
+                .eq('shop_name_id', activeShop.id);
 
             productsCache = products || [];
-            productGrid.innerHTML = '';
             
+            let lowStockCount = 0;
+            const previewContainer = document.getElementById('dash-inventory-list');
+            previewContainer.innerHTML = '';
+
             if (productsCache.length === 0) {
-                productGrid.innerHTML = '<p class="text-gray-400 text-sm col-span-full">No items in inventory. Add one above!</p>';
+                previewContainer.innerHTML = '<p class="text-xs text-gray-400 italic">No inventory items. Add one in Inventory tab.</p>';
+            } else {
+                productsCache.slice(0, 3).forEach(prod => {
+                    if (prod.stock_qty <= 3) lowStockCount++;
+                    const statusTag = prod.stock_qty <= 3 ? '<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Low stock</span>' : '<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">In stock</span>';
+                    
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between items-center bg-gray-50 p-2.5 rounded-2xl';
+                    div.innerHTML = `
+                        <div>
+                            <p class="font-bold text-gray-800 text-xs">${prod.name}</p>
+                            <p class="text-[10px] text-gray-400">${prod.stock_qty} in stock · Ksh ${prod.selling_price}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${statusTag}
+                            <button onclick="quickSell('${prod.id}')" class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-xl">Quick Sell</button>
+                        </div>
+                    `;
+                    previewContainer.appendChild(div);
+                });
+            }
+
+            if (lowStockCount > 0) {
+                document.getElementById('stock-warning-banner').classList.remove('hidden');
+                document.getElementById('low-stock-text').textContent = `${lowStockCount} product(s) low in stock!`;
+            } else {
+                document.getElementById('stock-warning-banner').classList.add('hidden');
+            }
+
+            // 2. Fetch Sales Today
+            const { data: sales } = await supabaseClient
+                .from('sales')
+                .select('*')
+                .eq('shop_name_id', activeShop.id);
+
+            let totalRev = 0;
+            let totalProf = 0;
+            let mpesaTotal = 0;
+            let cashTotal = 0;
+            let debtTotal = 0;
+
+            if (sales) {
+                sales.forEach(s => {
+                    totalRev += s.total_amount;
+                    totalProf += (s.profit || 0);
+                    if (s.payment_method === 'M-Pesa') mpesaTotal += s.total_amount;
+                    else if (s.payment_method === 'Debt') debtTotal += s.total_amount;
+                    else cashTotal += s.total_amount;
+                });
+            }
+
+            document.getElementById('dash-total-sales').textContent = `Ksh ${totalRev.toLocaleString()}`;
+            document.getElementById('dash-total-profit').textContent = `Ksh ${totalProf.toLocaleString()}`;
+            document.getElementById('dash-orders-count').textContent = sales ? sales.length : 0;
+            document.getElementById('dash-avg-order').textContent = sales && sales.length > 0 ? `Ksh ${Math.round(totalRev / sales.length)}` : 'Ksh 0';
+
+            document.getElementById('pay-mpesa').textContent = `Ksh ${mpesaTotal.toLocaleString()}`;
+            document.getElementById('pay-cash').textContent = `Ksh ${cashTotal.toLocaleString()}`;
+            document.getElementById('pay-debt').textContent = `Ksh ${debtTotal.toLocaleString()}`;
+
+            // 3. Fetch Expenses Today
+            const { data: expenses } = await supabaseClient
+                .from('expenses')
+                .select('*')
+                .eq('shop_name_id', activeShop.id);
+
+            let totalExp = expenses ? expenses.reduce((acc, e) => acc + e.amount, 0) : 0;
+            document.getElementById('dash-expense-total').textContent = `Ksh ${totalExp.toLocaleString()}`;
+        }
+
+        // Inventory Management
+        async function loadInventory() {
+            const list = document.getElementById('full-inventory-list');
+            list.innerHTML = '<p class="text-xs text-gray-400 italic">Loading inventory...</p>';
+
+            const { data: products } = await supabaseClient
+                .from('products')
+                .select('*')
+                .eq('shop_name_id', activeShop.id)
+                .order('created_at', { ascending: false });
+
+            list.innerHTML = '';
+            if (!products || products.length === 0) {
+                list.innerHTML = '<p class="text-xs text-gray-400 italic">No items found. Click "+ Add Item" above.</p>';
                 return;
             }
 
-            productsCache.forEach(prod => {
-                const card = document.createElement('div');
-                card.className = 'border rounded-lg p-3 hover:shadow-md transition cursor-pointer flex flex-col justify-between bg-gray-50';
-                card.innerHTML = `
+            products.forEach(prod => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-2xl';
+                div.innerHTML = `
                     <div>
-                        <div class="flex justify-between items-start">
-                            <h3 class="font-bold text-gray-800">${prod.name}</h3>
-                            <button onclick="deleteProduct('${prod.id}', event)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
-                        </div>
-                        <p class="text-emerald-600 font-semibold mt-1">KES ${prod.selling_price.toFixed(2)}</p>
+                        <p class="font-bold text-gray-800 text-xs">${prod.name}</p>
+                        <p class="text-[10px] text-gray-500">Stock: ${prod.stock_qty} | Buy: Ksh ${prod.buying_price} | Sell: Ksh ${prod.selling_price}</p>
                     </div>
-                    <div class="flex justify-between items-center mt-3 pt-2 border-t text-xs text-gray-500">
-                        <span class="${prod.stock_qty <= 3 ? 'text-red-500 font-bold' : ''}">Stock: ${prod.stock_qty}</span>
-                        <span class="text-emerald-700 font-bold uppercase tracking-wider">+ Add</span>
-                    </div>
+                    <button onclick="deleteProduct('${prod.id}')" class="text-red-400 hover:text-red-600 text-xs font-bold px-2 py-1">Delete</button>
                 `;
-                card.addEventListener('click', () => addToCart(prod));
-                productGrid.appendChild(card);
+                list.appendChild(div);
             });
         }
 
-        addProductForm.addEventListener('submit', async (e) => {
+        // Add Product Form
+        function openAddProductModal() {
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        document.getElementById('product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = document.getElementById('prod-name').value;
+            const name = document.getElementById('prod-name').value.trim();
             const buying_price = parseFloat(document.getElementById('prod-buying').value);
-            const selling_price = parseFloat(document.getElementById('prod-price').value);
+            const selling_price = parseFloat(document.getElementById('prod-selling').value);
             const stock_qty = parseInt(document.getElementById('prod-qty').value);
 
             const { error } = await supabaseClient
                 .from('products')
-                .insert([{ shop_name_id: currentShopId, name, buying_price, selling_price, stock_qty }]);
+                .insert([{ shop_name_id: activeShop.id, name, buying_price, selling_price, stock_qty }]);
 
-            if (error) {
-                alert('Error adding product: ' + error.message);
-            } else {
-                addProductForm.reset();
-                fetchProducts();
+            if (error) alert('Error: ' + error.message);
+            else {
+                closeModals();
+                document.getElementById('product-form').reset();
+                loadDashboardData();
             }
         });
 
-        async function deleteProduct(id, event) {
-            event.stopPropagation();
-            if (!confirm('Are you sure you want to delete this item?')) return;
-            
-            const { error } = await supabaseClient.from('products').delete().eq('id', id);
-            if (error) alert('Failed to delete: ' + error.message);
-            else fetchProducts();
+        async function deleteProduct(id) {
+            if (!confirm('Delete item?')) return;
+            await supabaseClient.from('products').delete().eq('id', id);
+            loadInventory();
         }
 
-        function addToCart(product) {
-            if (product.stock_qty <= 0) {
-                alert('Item is out of stock!');
-                return;
-            }
-
-            const existing = cart.find(item => item.id === product.id);
-            if (existing) {
-                if (existing.qty >= product.stock_qty) {
-                    alert('Cannot add more than available stock!');
-                    return;
-                }
-                existing.qty += 1;
+        // Sales & Quick Sell
+        function openNewSaleModal() {
+            const select = document.getElementById('sale-product-select');
+            select.innerHTML = '';
+            if (productsCache.length === 0) {
+                select.innerHTML = '<option>No products available. Add inventory first.</option>';
             } else {
-                cart.push({ ...product, qty: 1, maxStock: product.stock_qty });
+                productsCache.forEach(p => {
+                    select.innerHTML += `<option value="${p.id}">${p.name} (Stock: ${p.stock_qty} - Ksh ${p.selling_price})</option>`;
+                });
             }
-            renderCart();
+            document.getElementById('sale-modal').classList.remove('hidden');
         }
 
-        function renderCart() {
-            cartItemsContainer.innerHTML = '';
-            if (cart.length === 0) {
-                cartItemsContainer.innerHTML = '<p class="text-gray-400 text-sm italic">Cart is empty</p>';
-                cartTotalDisplay.textContent = 'KES 0.00';
-                cartProfitDisplay.textContent = 'KES 0.00';
+        async function quickSell(productId) {
+            const product = productsCache.find(p => p.id === productId);
+            if (!product || product.stock_qty <= 0) {
+                alert('Item out of stock!');
                 return;
             }
 
-            let total = 0;
-            let totalProfit = 0;
+            const totalAmount = product.selling_price;
+            const profit = product.selling_price - product.buying_price;
 
-            cart.forEach(item => {
-                const itemTotal = item.selling_price * item.qty;
-                const itemProfit = (item.selling_price - item.buying_price) * item.qty;
-                total += itemTotal;
-                totalProfit += itemProfit;
+            // Record sale
+            await supabaseClient.from('sales').insert([{
+                shop_name_id: activeShop.id,
+                total_amount: totalAmount,
+                profit: profit,
+                payment_method: 'Cash'
+            }]);
 
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center text-sm border-b pb-2';
-                div.innerHTML = `
-                    <div>
-                        <p class="font-medium text-gray-800">${item.name}</p>
-                        <p class="text-xs text-gray-500">${item.qty} x KES ${item.selling_price}</p>
-                    </div>
-                    <span class="font-bold text-gray-700">KES ${itemTotal.toFixed(2)}</span>
-                `;
-                cartItemsContainer.appendChild(div);
-            });
+            // Deduct stock
+            await supabaseClient.from('products').update({ stock_qty: product.stock_qty - 1 }).eq('id', productId);
 
-            cartTotalDisplay.textContent = `KES ${total.toFixed(2)}`;
-            cartProfitDisplay.textContent = `KES ${totalProfit.toFixed(2)}`;
+            loadDashboardData();
+            alert(`Sold 1x ${product.name} for Ksh ${totalAmount}!`);
         }
 
-        // Checkout & Automated Stock Reduction + Profit Logging
-        checkoutCashBtn.addEventListener('click', async () => {
-            if (cart.length === 0) return alert('Cart is empty!');
+        document.getElementById('sale-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const prodId = document.getElementById('sale-product-select').value;
+            const qty = parseInt(document.getElementById('sale-qty').value);
+            const method = document.getElementById('sale-method').value;
 
-            let totalAmount = cart.reduce((acc, item) => acc + (item.selling_price * item.qty), 0);
-            let totalProfit = cart.reduce((acc, item) => acc + ((item.selling_price - item.buying_price) * item.qty), 0);
-
-            // 1. Record Sale in Supabase (including profit calculation)
-            const { error: saleError } = await supabaseClient
-                .from('sales')
-                .insert([{ 
-                    shop_name_id: currentShopId, 
-                    total_amount: totalAmount, 
-                    profit: totalProfit,
-                    payment_method: 'CASH' 
-                }]);
-
-            if (saleError) {
-                alert('Checkout failed: ' + saleError.message);
+            const product = productsCache.find(p => p.id === prodId);
+            if (!product || product.stock_qty < qty) {
+                alert('Insufficient stock!');
                 return;
             }
 
-            // 2. Automatically Deduct Stock from Products Table
-            for (const item of cart) {
-                const newStock = item.maxStock - item.qty;
-                await supabaseClient
-                    .from('products')
-                    .update({ stock_qty: newStock })
-                    .eq('id', item.id);
-            }
+            const totalAmount = product.selling_price * qty;
+            const profit = (product.selling_price - product.buying_price) * qty;
 
-            alert('Sale completed successfully! Stock updated.');
-            cart = [];
-            renderCart();
-            fetchProducts();
+            await supabaseClient.from('sales').insert([{
+                shop_name_id: activeShop.id,
+                total_amount: totalAmount,
+                profit: profit,
+                payment_method: method
+            }]);
+
+            await supabaseClient.from('products').update({ stock_qty: product.stock_qty - qty }).eq('id', prodId);
+
+            closeModals();
+            loadDashboardData();
+            alert('Sale recorded successfully!');
         });
 
-        // Fetch Reports and Profit Metrics
-        async function fetchReports() {
-            const { data: sales, error } = await supabaseClient
+        async function loadSalesHistory() {
+            const list = document.getElementById('sales-history-list');
+            list.innerHTML = '<p class="text-xs text-gray-400 italic">Loading sales history...</p>';
+
+            const { data: sales } = await supabaseClient
                 .from('sales')
                 .select('*')
-                .eq('shop_name_id', currentShopId)
+                .eq('shop_name_id', activeShop.id)
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Error fetching sales report:', error);
-                return;
-            }
-
-            let totalRev = 0;
-            let totalProf = 0;
-            const historyTable = document.getElementById('sales-history-table');
-            historyTable.innerHTML = '';
-
+            list.innerHTML = '';
             if (!sales || sales.length === 0) {
-                historyTable.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No sales recorded yet.</td></tr>';
-                document.getElementById('rep-total-revenue').textContent = 'KES 0.00';
-                document.getElementById('rep-total-profit').textContent = 'KES 0.00';
-                document.getElementById('rep-total-sales-count').textContent = '0';
+                list.innerHTML = '<p class="text-xs text-gray-400 italic">No sales recorded yet.</p>';
                 return;
             }
 
-            sales.forEach(sale => {
-                totalRev += sale.total_amount;
-                const saleProfit = sale.profit || 0; // Falls back if column hasn't been migrated yet
-                totalProf += saleProfit;
-
-                const tr = document.createElement('tr');
-                tr.className = 'border-b';
-                tr.innerHTML = `
-                    <td class="p-3">${new Date(sale.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(sale.created_at).toLocaleDateString()}</td>
-                    <td class="p-3"><span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded font-semibold">${sale.payment_method}</span></td>
-                    <td class="p-3 font-bold text-gray-800">KES ${sale.total_amount.toFixed(2)}</td>
-                    <td class="p-3 font-bold text-emerald-600">+ KES ${saleProfit.toFixed(2)}</td>
+            sales.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-2xl text-xs';
+                div.innerHTML = `
+                    <div>
+                        <p class="font-bold text-gray-800">Ksh ${s.total_amount} <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">${s.payment_method}</span></p>
+                        <p class="text-[10px] text-gray-400">${new Date(s.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} · Profit: +Ksh ${s.profit || 0}</p>
+                    </div>
                 `;
-                historyTable.appendChild(tr);
+                list.appendChild(div);
             });
-
-            document.getElementById('rep-total-revenue').textContent = `KES ${totalRev.toFixed(2)}`;
-            document.getElementById('rep-total-profit').textContent = `KES ${totalProf.toFixed(2)}`;
-            document.getElementById('rep-total-sales-count').textContent = sales.length;
         }
 
-        checkUserSession();
+        // Expenses (Matumizi)
+        async function addExpensePrompt() {
+            const desc = prompt('Enter expense description (e.g., Electricity/Transport):');
+            if (!desc) return;
+            const amount = parseFloat(prompt('Enter expense amount in Ksh:'));
+            if (isNaN(amount) || amount <= 0) return alert('Invalid amount!');
+
+            await supabaseClient.from('expenses').insert([{
+                shop_name_id: activeShop.id,
+                description: desc,
+                amount: amount
+            }]);
+
+            loadDashboardData();
+            alert('Expense recorded!');
+        }
+
+        function closeModals() {
+            document.getElementById('sale-modal').classList.add('hidden');
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        checkSession();
     </script>
 </body>
 </html>
