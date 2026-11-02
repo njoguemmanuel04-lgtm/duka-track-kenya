@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-emerald-900 font-sans min-h-screen">
@@ -16,6 +17,13 @@
         
         <!-- BRANDING HEADER CARD -->
         <div class="bg-white rounded-3xl p-5 shadow-lg space-y-3 text-center">
+            <div class="flex justify-between items-center px-1">
+                <span class="text-xs font-semibold text-gray-400">PWA Offline-First</span>
+                <!-- SEPARATE ADMIN PAGE LINK -->
+                <a href="admin.html" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 flex items-center gap-1">
+                    <i class="fa-solid fa-shield-halved text-xs"></i> Admin Portal
+                </a>
+            </div>
             <div class="flex justify-center items-center gap-3">
                 <div class="bg-emerald-100 text-emerald-700 p-3 rounded-2xl text-2xl">
                     <i class="fa-solid fa-store text-emerald-600"></i>
@@ -94,7 +102,7 @@
                 </div>
                 <div>
                     <h1 id="headerActiveShopName" class="font-bold text-gray-800 text-base leading-none tracking-wide">Mwea shop</h1>
-                    <span id="networkStatus" class="text-xs font-semibold text-emerald-600">● Online (Auto-Syncing)</span>
+                    <span id="networkStatus" class="text-xs font-semibold text-emerald-600">● Cloud Syncing</span>
                 </div>
             </div>
             <div class="flex items-center space-x-2">
@@ -107,7 +115,7 @@
             </div>
         </header>
 
-        <!-- BARCODE SCANNER MODAL CONTAINER -->
+        <!-- BARCODE SCANNER MODAL -->
         <div id="scannerModal" class="hidden fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center p-4">
             <div class="bg-white rounded-2xl p-4 w-full max-w-sm space-y-3 relative text-center">
                 <button onclick="stopBarcodeScan()" class="absolute top-2 right-3 text-gray-500 text-xl font-bold">&times;</button>
@@ -292,8 +300,12 @@
         </nav>
     </div>
 
-    <!-- JAVASCRIPT ENGINE WITH FULL BARCODE, EXPENSE & SEARCH LOGIC -->
+    <!-- JAVASCRIPT SUPABASE CLOUD & DEXIE ENGINE -->
     <script>
+        const SUPABASE_URL = "https://torzbgvwjhthzuifdses.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcnpiZ3Z3amh0aHp1aWZkc2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyODQ4OTAsImV4cCI6MjEwODg2MDg5MH0.Jjzgt-mCxA94Y1lG6fLDLupteE8RZs6dygJO5BVClKY";
+        const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
         let registeredShops = JSON.parse(localStorage.getItem('dukatrack_shops_list')) || [
             { name: "Mwea shop", location: "Mwea Town", phone: "0711000001", id: "duka_1" },
             { name: "Wambui Provision", location: "Wang'uru", phone: "0722000002", id: "duka_2" },
@@ -308,9 +320,24 @@
             localStorage.setItem('dukatrack_shops_list', JSON.stringify(registeredShops));
         }
 
-        function renderDirectory() {
+        async function renderDirectory() {
             const listElem = document.getElementById('shopDirectoryList');
             listElem.innerHTML = '';
+
+            // Fetch cloud shops if connected to internet
+            if (supabase) {
+                try {
+                    const { data: cloudDukas } = await supabase.from('dukas').select('*');
+                    if (cloudDukas && cloudDukas.length > 0) {
+                        cloudDukas.forEach(cd => {
+                            if (!registeredShops.some(s => s.id === cd.id)) {
+                                registeredShops.push({ id: cd.id, name: cd.name, phone: cd.phone, location: cd.location });
+                            }
+                        });
+                        saveShopsList();
+                    }
+                } catch(e) {}
+            }
 
             registeredShops.forEach(shop => {
                 listElem.innerHTML += `
@@ -329,7 +356,7 @@
             });
         }
 
-        function handleCreateShop(event) {
+        async function handleCreateShop(event) {
             event.preventDefault();
             const name = document.getElementById('newShopName').value.trim();
             const phone = document.getElementById('newShopPhone').value.trim();
@@ -341,8 +368,13 @@
 
             registeredShops.push(newShop);
             saveShopsList();
-            renderDirectory();
 
+            // Cloud Backup
+            if (supabase) {
+                await supabase.from('dukas').insert([{ id: shopId, name, phone, location, pin }]);
+            }
+
+            renderDirectory();
             enterShop(shopId);
         }
 
@@ -403,6 +435,26 @@
             await loadSalesHistory();
             await loadDebtsList();
             await checkLowStockAlerts();
+            syncLocalDataToCloud();
+        }
+
+        async function syncLocalDataToCloud() {
+            if (!supabase || !activeShop) return;
+            try {
+                // Sync unsynced sales to Supabase cloud
+                const unsyncedSales = await db.sales.where('synced').equals(0).toArray();
+                for (let s of unsyncedSales) {
+                    const { error } = await supabase.from('sales').insert([{
+                        duka_id: activeShop.id,
+                        total: s.total,
+                        profit: s.profit,
+                        method: s.method,
+                        customer: s.customer,
+                        created_at: s.created_at
+                    }]);
+                    if (!error) await db.sales.update(s.id, { synced: 1 });
+                }
+            } catch(e) {}
         }
 
         async function checkLowStockAlerts() {
@@ -567,6 +619,10 @@
                 created_at: new Date().toISOString()
             });
 
+            if (supabase && activeShop) {
+                await supabase.from('expenses').insert([{ duka_id: activeShop.id, title, amount }]);
+            }
+
             alert(`Logged expense: ${title} - Ksh ${amount}`);
             loadAppData();
         }
@@ -671,15 +727,29 @@
             const unit = prompt("Unit (e.g., kg, L, pcs):", "kg");
 
             if (name && !isNaN(price) && !isNaN(stock)) {
+                const bPrice = isNaN(buyingPrice) ? price * 0.8 : buyingPrice;
                 await db.products.add({ 
                     barcode: barcode || null,
                     name, 
                     price, 
-                    buying_price: isNaN(buyingPrice) ? price * 0.8 : buyingPrice, 
+                    buying_price: bPrice, 
                     stock, 
                     unit, 
                     min_stock: 5 
                 });
+
+                if (supabase && activeShop) {
+                    await supabase.from('products').insert([{
+                        duka_id: activeShop.id,
+                        barcode: barcode || null,
+                        name,
+                        price,
+                        buying_price: bPrice,
+                        stock,
+                        unit
+                    }]);
+                }
+
                 loadAppData();
             }
         }
@@ -773,10 +843,6 @@
 
             const encodedMsg = encodeURIComponent(msg);
             window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
-        }
-
-        function triggerSync() {
-            alert("All local sales records for your duka are synced!");
         }
 
         saveShopsList();
