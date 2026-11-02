@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Duka Ke - Multitenant POS & Inventory</title>
-    <!-- Tailwind CSS for modern, clean UI -->
+    <title>Duka OS - Advanced POS & Inventory</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -42,60 +42,102 @@
             <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-3">
                     <span class="text-xl font-bold tracking-tight">🛒 Duka OS</span>
-                    <span id="shop-name-badge" class="bg-emerald-800 text-emerald-200 text-xs px-2.5 py-1 rounded-full font-medium">Loading Duka...</span>
+                    <span id="shop-name-badge" class="bg-emerald-800 text-emerald-200 text-xs px-2.5 py-1 rounded-full font-medium">Loading...</span>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <span class="text-sm text-emerald-100 hidden sm:inline">Register Active</span>
-                    <button id="logout-btn" class="bg-emerald-800 hover:bg-emerald-900 text-xs px-3 py-1.5 rounded font-semibold transition">
-                        Lock Register
-                    </button>
+                <div class="flex items-center space-x-3">
+                    <button onclick="switchTab('pos')" id="tab-pos-btn" class="bg-emerald-800 text-xs px-3 py-1.5 rounded font-semibold transition">POS & Stock</button>
+                    <button onclick="switchTab('reports')" id="tab-rep-btn" class="bg-emerald-900/50 text-xs px-3 py-1.5 rounded font-semibold transition">Reports & Profit</button>
+                    <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-xs px-3 py-1.5 rounded font-semibold transition">Lock</button>
                 </div>
             </div>
         </header>
 
-        <!-- Main Workspace Grid -->
-        <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Workspace -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4">
             
-            <!-- Left 2 Cols: Product Catalog & POS Selection -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Add Product Quick Form -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg font-bold text-gray-800 mb-3">Add New Inventory Item</h2>
-                    <form id="add-product-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <input type="text" id="prod-name" placeholder="Item Name" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
-                        <input type="number" step="0.01" id="prod-price" placeholder="Selling Price (KES)" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
-                        <input type="number" id="prod-qty" placeholder="Stock Qty" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
-                        <button type="submit" class="bg-gray-900 hover:bg-black text-white text-sm font-semibold py-2 rounded-lg transition">Add Item</button>
-                    </form>
+            <!-- VIEW 1: POS & INVENTORY TAB -->
+            <div id="view-pos" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left 2 Cols: Add Item & Inventory Grid -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Add Product Form -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold text-gray-800 mb-3">Add Inventory & Set Profit Margins</h2>
+                        <form id="add-product-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <input type="text" id="prod-name" placeholder="Item Name" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+                            <input type="number" step="0.01" id="prod-buying" placeholder="Buying Price" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+                            <input type="number" step="0.01" id="prod-price" placeholder="Selling Price" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+                            <input type="number" id="prod-qty" placeholder="Stock Qty" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+                            <button type="submit" class="sm:col-span-4 bg-gray-900 hover:bg-black text-white text-sm font-semibold py-2.5 rounded-lg transition">Save to Inventory</button>
+                        </form>
+                    </div>
+
+                    <!-- Product Catalog -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4">Shop Inventory (Click item to add to sale cart)</h2>
+                        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            <p class="text-gray-400 text-sm">Loading inventory...</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Product Catalog Grid -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4">Shop Inventory (Click to add to cart)</h2>
-                    <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        <p class="text-gray-400 text-sm">Loading products...</p>
+                <!-- Right Col: Cart & Checkout -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Active Cart</h2>
+                        <div id="cart-items" class="space-y-3 max-h-80 overflow-y-auto pr-1">
+                            <p class="text-gray-400 text-sm italic">Cart is empty</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 border-t pt-4">
+                        <div class="flex justify-between items-center mb-1 text-sm text-gray-500">
+                            <span>Estimated Profit:</span>
+                            <span id="cart-profit" class="font-semibold text-emerald-600">KES 0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-base font-semibold text-gray-800">Total:</span>
+                            <span id="cart-total" class="text-2xl font-black text-emerald-600">KES 0.00</span>
+                        </div>
+                        <button id="checkout-cash-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-md">
+                            Complete Cash Sale
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Col: POS Checkout & Cart -->
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
-                <div>
-                    <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Current Sale / Cart</h2>
-                    <div id="cart-items" class="space-y-3 max-h-80 overflow-y-auto pr-1">
-                        <p class="text-gray-400 text-sm italic">Cart is empty</p>
+            <!-- VIEW 2: REPORTS & PROFIT TRACKER TAB -->
+            <div id="view-reports" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-xs uppercase font-bold text-gray-400">Total Revenue</p>
+                        <h3 id="rep-total-revenue" class="text-3xl font-black text-gray-900 mt-1">KES 0.00</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-xs uppercase font-bold text-gray-400">Total Gross Profit</p>
+                        <h3 id="rep-total-profit" class="text-3xl font-black text-emerald-600 mt-1">KES 0.00</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-xs uppercase font-bold text-gray-400">Transactions Recorded</p>
+                        <h3 id="rep-total-sales-count" class="text-3xl font-black text-blue-600 mt-1">0</h3>
                     </div>
                 </div>
 
-                <div class="mt-6 border-t pt-4">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-base font-semibold text-gray-600">Total:</span>
-                        <span id="cart-total" class="text-2xl font-black text-emerald-600">KES 0.00</span>
-                    </div>
-                    <div class="space-y-2">
-                        <button id="checkout-cash-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-md">
-                            Complete Sale (Cash)
-                        </button>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4">Sales History Log</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-gray-600">
+                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                                <tr>
+                                    <th class="p-3">Time</th>
+                                    <th class="p-3">Method</th>
+                                    <th class="p-3">Amount</th>
+                                    <th class="p-3">Profit Earned</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sales-history-table">
+                                <tr><td colspan="4" class="p-4 text-center text-gray-400">Loading sales history...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -103,9 +145,8 @@
         </main>
     </div>
 
-    <!-- CLIENT SCRIPT LOGIC -->
+    <!-- SCRIPT LOGIC -->
     <script>
-        // SUPABASE CONFIGURATION
         const SUPABASE_URL = 'https://torzbgvwjhthzuifdses.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcnpiZ3Z3amh0aHp1aWZkc2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyODQ4OTAsImV4cCI6MjEwODg2MDg5MH0.Jjzgt-mCxA94Y1lG6fLDLupteE8RZs6dygJO5BVClKY';
         
@@ -113,6 +154,7 @@
 
         let currentShopId = null;
         let cart = [];
+        let productsCache = [];
 
         // DOM Elements
         const authContainer = document.getElementById('auth-container');
@@ -125,9 +167,9 @@
         const addProductForm = document.getElementById('add-product-form');
         const cartItemsContainer = document.getElementById('cart-items');
         const cartTotalDisplay = document.getElementById('cart-total');
+        const cartProfitDisplay = document.getElementById('cart-profit');
         const checkoutCashBtn = document.getElementById('checkout-cash-btn');
 
-        // Check active session on load via localStorage
         function checkUserSession() {
             const savedShopId = localStorage.getItem('duka_active_shop_id');
             const savedShopName = localStorage.getItem('duka_active_shop_name');
@@ -141,7 +183,6 @@
             }
         }
 
-        // PIN Login Event
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             authError.textContent = '';
@@ -163,29 +204,46 @@
 
             const shop = shops[0];
             currentShopId = shop.id;
-            
             localStorage.setItem('duka_active_shop_id', shop.id);
             localStorage.setItem('duka_active_shop_name', shop.shop_name);
 
             enterDashboard(shop.shop_name);
         });
 
-        // Transition to App Dashboard
         function enterDashboard(shopName) {
             authContainer.classList.add('hidden');
             appContainer.classList.remove('hidden');
             shopBadge.textContent = shopName;
             fetchProducts();
+            fetchReports();
         }
 
-        // Logout / Lock Register
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('duka_active_shop_id');
             localStorage.removeItem('duka_active_shop_name');
             window.location.reload();
         });
 
-        // Fetch Products filtered by active shop_name_id
+        function switchTab(tab) {
+            const posView = document.getElementById('view-pos');
+            const repView = document.getElementById('view-reports');
+            const posBtn = document.getElementById('tab-pos-btn');
+            const repBtn = document.getElementById('tab-rep-btn');
+
+            if (tab === 'pos') {
+                posView.classList.remove('hidden');
+                repView.classList.add('hidden');
+                posBtn.className = 'bg-emerald-800 text-xs px-3 py-1.5 rounded font-semibold transition';
+                repBtn.className = 'bg-emerald-900/50 text-xs px-3 py-1.5 rounded font-semibold transition';
+            } else {
+                posView.classList.add('hidden');
+                repView.classList.remove('hidden');
+                repBtn.className = 'bg-emerald-800 text-xs px-3 py-1.5 rounded font-semibold transition';
+                posBtn.className = 'bg-emerald-900/50 text-xs px-3 py-1.5 rounded font-semibold transition';
+                fetchReports();
+            }
+        }
+
         async function fetchProducts() {
             const { data: products, error } = await supabaseClient
                 .from('products')
@@ -198,23 +256,28 @@
                 return;
             }
 
+            productsCache = products || [];
             productGrid.innerHTML = '';
-            if (!products || products.length === 0) {
-                productGrid.innerHTML = '<p class="text-gray-400 text-sm">No items in inventory. Add one above!</p>';
+            
+            if (productsCache.length === 0) {
+                productGrid.innerHTML = '<p class="text-gray-400 text-sm col-span-full">No items in inventory. Add one above!</p>';
                 return;
             }
 
-            products.forEach(prod => {
+            productsCache.forEach(prod => {
                 const card = document.createElement('div');
                 card.className = 'border rounded-lg p-3 hover:shadow-md transition cursor-pointer flex flex-col justify-between bg-gray-50';
                 card.innerHTML = `
                     <div>
-                        <h3 class="font-bold text-gray-800">${prod.name}</h3>
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-gray-800">${prod.name}</h3>
+                            <button onclick="deleteProduct('${prod.id}', event)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
+                        </div>
                         <p class="text-emerald-600 font-semibold mt-1">KES ${prod.selling_price.toFixed(2)}</p>
                     </div>
                     <div class="flex justify-between items-center mt-3 pt-2 border-t text-xs text-gray-500">
-                        <span>Stock: ${prod.stock_qty}</span>
-                        <span class="text-emerald-700 font-semibold uppercase tracking-wider">+ Add</span>
+                        <span class="${prod.stock_qty <= 3 ? 'text-red-500 font-bold' : ''}">Stock: ${prod.stock_qty}</span>
+                        <span class="text-emerald-700 font-bold uppercase tracking-wider">+ Add</span>
                     </div>
                 `;
                 card.addEventListener('click', () => addToCart(prod));
@@ -222,16 +285,16 @@
             });
         }
 
-        // Add Product to Inventory
         addProductForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('prod-name').value;
+            const buying_price = parseFloat(document.getElementById('prod-buying').value);
             const selling_price = parseFloat(document.getElementById('prod-price').value);
             const stock_qty = parseInt(document.getElementById('prod-qty').value);
 
             const { error } = await supabaseClient
                 .from('products')
-                .insert([{ shop_name_id: currentShopId, name, selling_price, buying_price: selling_price * 0.7, stock_qty }]);
+                .insert([{ shop_name_id: currentShopId, name, buying_price, selling_price, stock_qty }]);
 
             if (error) {
                 alert('Error adding product: ' + error.message);
@@ -241,13 +304,30 @@
             }
         });
 
-        // Cart Logic
+        async function deleteProduct(id, event) {
+            event.stopPropagation();
+            if (!confirm('Are you sure you want to delete this item?')) return;
+            
+            const { error } = await supabaseClient.from('products').delete().eq('id', id);
+            if (error) alert('Failed to delete: ' + error.message);
+            else fetchProducts();
+        }
+
         function addToCart(product) {
+            if (product.stock_qty <= 0) {
+                alert('Item is out of stock!');
+                return;
+            }
+
             const existing = cart.find(item => item.id === product.id);
             if (existing) {
+                if (existing.qty >= product.stock_qty) {
+                    alert('Cannot add more than available stock!');
+                    return;
+                }
                 existing.qty += 1;
             } else {
-                cart.push({ ...product, qty: 1 });
+                cart.push({ ...product, qty: 1, maxStock: product.stock_qty });
             }
             renderCart();
         }
@@ -257,12 +337,19 @@
             if (cart.length === 0) {
                 cartItemsContainer.innerHTML = '<p class="text-gray-400 text-sm italic">Cart is empty</p>';
                 cartTotalDisplay.textContent = 'KES 0.00';
+                cartProfitDisplay.textContent = 'KES 0.00';
                 return;
             }
 
             let total = 0;
+            let totalProfit = 0;
+
             cart.forEach(item => {
-                total += item.selling_price * item.qty;
+                const itemTotal = item.selling_price * item.qty;
+                const itemProfit = (item.selling_price - item.buying_price) * item.qty;
+                total += itemTotal;
+                totalProfit += itemProfit;
+
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center text-sm border-b pb-2';
                 div.innerHTML = `
@@ -270,34 +357,99 @@
                         <p class="font-medium text-gray-800">${item.name}</p>
                         <p class="text-xs text-gray-500">${item.qty} x KES ${item.selling_price}</p>
                     </div>
-                    <span class="font-bold text-gray-700">KES ${(item.selling_price * item.qty).toFixed(2)}</span>
+                    <span class="font-bold text-gray-700">KES ${itemTotal.toFixed(2)}</span>
                 `;
                 cartItemsContainer.appendChild(div);
             });
+
             cartTotalDisplay.textContent = `KES ${total.toFixed(2)}`;
+            cartProfitDisplay.textContent = `KES ${totalProfit.toFixed(2)}`;
         }
 
-        // Checkout Cash Transaction
+        // Checkout & Automated Stock Reduction + Profit Logging
         checkoutCashBtn.addEventListener('click', async () => {
             if (cart.length === 0) return alert('Cart is empty!');
 
             let totalAmount = cart.reduce((acc, item) => acc + (item.selling_price * item.qty), 0);
+            let totalProfit = cart.reduce((acc, item) => acc + ((item.selling_price - item.buying_price) * item.qty), 0);
 
-            const { error } = await supabaseClient
+            // 1. Record Sale in Supabase (including profit calculation)
+            const { error: saleError } = await supabaseClient
                 .from('sales')
-                .insert([{ shop_name_id: currentShopId, total_amount: totalAmount, payment_method: 'CASH' }]);
+                .insert([{ 
+                    shop_name_id: currentShopId, 
+                    total_amount: totalAmount, 
+                    profit: totalProfit,
+                    payment_method: 'CASH' 
+                }]);
 
-            if (error) {
-                alert('Checkout failed: ' + error.message);
-            } else {
-                alert('Sale completed successfully!');
-                cart = [];
-                renderCart();
-                fetchProducts();
+            if (saleError) {
+                alert('Checkout failed: ' + saleError.message);
+                return;
             }
+
+            // 2. Automatically Deduct Stock from Products Table
+            for (const item of cart) {
+                const newStock = item.maxStock - item.qty;
+                await supabaseClient
+                    .from('products')
+                    .update({ stock_qty: newStock })
+                    .eq('id', item.id);
+            }
+
+            alert('Sale completed successfully! Stock updated.');
+            cart = [];
+            renderCart();
+            fetchProducts();
         });
 
-        // Initialize App Check on Load
+        // Fetch Reports and Profit Metrics
+        async function fetchReports() {
+            const { data: sales, error } = await supabaseClient
+                .from('sales')
+                .select('*')
+                .eq('shop_name_id', currentShopId)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching sales report:', error);
+                return;
+            }
+
+            let totalRev = 0;
+            let totalProf = 0;
+            const historyTable = document.getElementById('sales-history-table');
+            historyTable.innerHTML = '';
+
+            if (!sales || sales.length === 0) {
+                historyTable.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No sales recorded yet.</td></tr>';
+                document.getElementById('rep-total-revenue').textContent = 'KES 0.00';
+                document.getElementById('rep-total-profit').textContent = 'KES 0.00';
+                document.getElementById('rep-total-sales-count').textContent = '0';
+                return;
+            }
+
+            sales.forEach(sale => {
+                totalRev += sale.total_amount;
+                const saleProfit = sale.profit || 0; // Falls back if column hasn't been migrated yet
+                totalProf += saleProfit;
+
+                const tr = document.createElement('tr');
+                tr.className = 'border-b';
+                tr.innerHTML = `
+                    <td class="p-3">${new Date(sale.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(sale.created_at).toLocaleDateString()}</td>
+                    <td class="p-3"><span class="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded font-semibold">${sale.payment_method}</span></td>
+                    <td class="p-3 font-bold text-gray-800">KES ${sale.total_amount.toFixed(2)}</td>
+                    <td class="p-3 font-bold text-emerald-600">+ KES ${saleProfit.toFixed(2)}</td>
+                `;
+                historyTable.appendChild(tr);
+            });
+
+            document.getElementById('rep-total-revenue').textContent = `KES ${totalRev.toFixed(2)}`;
+            document.getElementById('rep-total-profit').textContent = `KES ${totalProf.toFixed(2)}`;
+            document.getElementById('rep-total-sales-count').textContent = sales.length;
+        }
+
         checkUserSession();
     </script>
 </body>
