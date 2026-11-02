@@ -6,6 +6,7 @@
     <title>DUKATRACK - Smart Duka Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-emerald-900 font-sans min-h-screen">
@@ -96,19 +97,40 @@
                     <span id="networkStatus" class="text-xs font-semibold text-emerald-600">● Online (Auto-Syncing)</span>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <button onclick="triggerSync()" class="p-2 text-gray-600 hover:text-emerald-600 text-sm flex items-center gap-1 bg-gray-100 rounded-lg">
-                    <i class="fa-solid fa-rotate"></i> Sync
+            <div class="flex items-center space-x-2">
+                <button onclick="startBarcodeScan()" class="p-2 text-emerald-700 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1 bg-emerald-50 rounded-lg border border-emerald-200">
+                    <i class="fa-solid fa-barcode text-sm"></i> Scan
                 </button>
-                <i class="fa-solid fa-bell text-gray-500 text-lg"></i>
+                <button onclick="shareWhatsAppReport()" class="p-2 text-emerald-600 hover:text-emerald-700 text-sm flex items-center gap-1 bg-gray-100 rounded-lg" title="WhatsApp Summary">
+                    <i class="fa-brands fa-whatsapp text-lg text-emerald-600"></i>
+                </button>
             </div>
         </header>
 
+        <!-- BARCODE SCANNER MODAL CONTAINER -->
+        <div id="scannerModal" class="hidden fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center p-4">
+            <div class="bg-white rounded-2xl p-4 w-full max-w-sm space-y-3 relative text-center">
+                <button onclick="stopBarcodeScan()" class="absolute top-2 right-3 text-gray-500 text-xl font-bold">&times;</button>
+                <h3 class="font-bold text-gray-800 text-sm">Scan Product Barcode</h3>
+                <div id="interactiveScanner" class="w-full rounded-xl overflow-hidden bg-black h-64"></div>
+                <p class="text-xs text-gray-500">Point camera directly at product barcode</p>
+            </div>
+        </div>
+
         <!-- MAIN DASHBOARD CONTENT -->
-        <main class="p-4 max-w-md mx-auto space-y-5">
+        <main class="p-4 max-w-md mx-auto space-y-4">
+
+            <!-- REAL-TIME LOW STOCK ALERT BANNER -->
+            <div id="lowStockBanner" class="hidden bg-amber-500 text-white rounded-2xl p-3 shadow-md flex justify-between items-center text-xs font-bold">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                    <span id="lowStockMessage">Attention: Some items are low in stock!</span>
+                </div>
+                <button onclick="switchTab('inventory')" class="bg-white text-amber-800 px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase">Restock</button>
+            </div>
 
             <!-- DASHBOARD TAB -->
-            <div id="tab-dashboard" class="space-y-5">
+            <div id="tab-dashboard" class="space-y-4">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-bold text-gray-800">Dashboard</h2>
                     <button onclick="quickSaleModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm flex items-center gap-1">
@@ -116,7 +138,7 @@
                     </button>
                 </div>
 
-                <!-- MAIN SALES & PROFIT CARD -->
+                <!-- MAIN SALES & NET PROFIT CARD -->
                 <div class="bg-emerald-100/70 border border-emerald-200 rounded-2xl p-4 shadow-sm space-y-3">
                     <div>
                         <div class="flex items-center space-x-1 text-emerald-800 text-xs font-medium mb-1">
@@ -128,16 +150,16 @@
                     
                     <div class="grid grid-cols-3 gap-2 pt-1 border-t border-emerald-200/60">
                         <div class="bg-white rounded-xl p-2.5 shadow-sm text-center">
-                            <div class="text-[10px] text-emerald-700 font-medium mb-0.5">Profit Today</div>
-                            <div id="profitToday" class="text-sm font-extrabold text-emerald-800">Ksh 0</div>
+                            <div class="text-[10px] text-emerald-700 font-medium mb-0.5">Net Profit Today</div>
+                            <div id="profitToday" class="text-xs font-extrabold text-emerald-800">Ksh 0</div>
                         </div>
                         <div class="bg-white rounded-xl p-2.5 shadow-sm text-center">
                             <div class="text-[10px] text-emerald-700 font-medium mb-0.5">Orders</div>
-                            <div id="orderCount" class="text-sm font-extrabold text-gray-800">0</div>
+                            <div id="orderCount" class="text-xs font-extrabold text-gray-800">0</div>
                         </div>
                         <div class="bg-white rounded-xl p-2.5 shadow-sm text-center">
                             <div class="text-[10px] text-emerald-700 font-medium mb-0.5">Avg Order</div>
-                            <div id="avgOrder" class="text-sm font-extrabold text-gray-800">Ksh 0</div>
+                            <div id="avgOrder" class="text-xs font-extrabold text-gray-800">Ksh 0</div>
                         </div>
                     </div>
                 </div>
@@ -164,6 +186,33 @@
                     </div>
                 </div>
 
+                <!-- DUKA EXPENSES WIDGET (MATUMIZI) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-receipt text-amber-600"></i> Shop Expenses (Matumizi)
+                        </h3>
+                        <button onclick="logExpensePrompt()" class="text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg">
+                            + Add Expense
+                        </button>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded-xl border border-gray-100">
+                        <span class="text-xs text-gray-500">Today's Matumizi Total:</span>
+                        <span id="expensesToday" class="font-bold text-amber-700 text-xs">Ksh 0</span>
+                    </div>
+                </div>
+
+                <!-- MKOPO DEBTOR LEDGER WIDGET -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 text-sm flex items-center gap-1">
+                            <i class="fa-solid fa-book-open text-red-500"></i> Active Mkopo (Debts)
+                        </h3>
+                        <span id="totalDebtBadge" class="text-xs font-extrabold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">Total: Ksh 0</span>
+                    </div>
+                    <div id="dashboardDebtList" class="space-y-2"></div>
+                </div>
+
                 <!-- INVENTORY PREVIEW -->
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
@@ -183,7 +232,7 @@
                 <div id="salesHistoryList" class="space-y-2"></div>
             </div>
 
-            <!-- INVENTORY TAB -->
+            <!-- INVENTORY TAB WITH SEARCH BAR -->
             <div id="tab-inventory" class="space-y-4 hidden">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-bold text-gray-800">Manage Inventory</h2>
@@ -191,6 +240,13 @@
                         <i class="fa-solid fa-plus"></i> Add Product
                     </button>
                 </div>
+
+                <!-- SEARCH BAR -->
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-gray-400 text-sm"></i>
+                    <input type="text" id="inventorySearch" onkeyup="filterInventorySearch()" placeholder="Search product name or scan barcode..." class="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-emerald-600">
+                </div>
+
                 <div id="fullInventoryList" class="space-y-2"></div>
             </div>
 
@@ -236,7 +292,7 @@
         </nav>
     </div>
 
-    <!-- JAVASCRIPT MULTI-TENANT DUKA ENGINE -->
+    <!-- JAVASCRIPT ENGINE WITH FULL BARCODE, EXPENSE & SEARCH LOGIC -->
     <script>
         let registeredShops = JSON.parse(localStorage.getItem('dukatrack_shops_list')) || [
             { name: "Mwea shop", location: "Mwea Town", phone: "0711000001", id: "duka_1" },
@@ -246,6 +302,7 @@
 
         let activeShop = null;
         let db = null;
+        let html5QrCodeScanner = null;
 
         function saveShopsList() {
             localStorage.setItem('dukatrack_shops_list', JSON.stringify(registeredShops));
@@ -301,18 +358,20 @@
             document.getElementById('profileShopLocation').innerText = `Location: ${activeShop.location}`;
 
             db = new Dexie(`DukaTrack_${activeShop.id}`);
-            db.version(1).stores({
-                products: '++id, name, stock, unit, price, buying_price, min_stock',
-                sales: '++id, total, profit, method, synced, created_at'
+            db.version(2).stores({
+                products: '++id, barcode, name, stock, unit, price, buying_price, min_stock',
+                sales: '++id, total, profit, method, customer, synced, created_at',
+                debts: '++id, customer_name, amount, settled, created_at',
+                expenses: '++id, title, amount, created_at'
             });
 
             db.on('populate', () => {
                 db.products.bulkAdd([
-                    { name: 'Ugali Flour', stock: 24, unit: 'kg', price: 180, buying_price: 150, min_stock: 5 },
-                    { name: 'Cooking Oil', stock: 12, unit: 'L', price: 350, buying_price: 300, min_stock: 15 },
-                    { name: 'Blueband', stock: 18, unit: '500g', price: 220, buying_price: 190, min_stock: 5 },
-                    { name: 'Sugar', stock: 30, unit: 'kg', price: 160, buying_price: 135, min_stock: 10 },
-                    { name: 'Packet Milk', stock: 40, unit: 'pcs', price: 65, buying_price: 55, min_stock: 10 }
+                    { barcode: '6001000001', name: 'Ugali Flour', stock: 24, unit: 'kg', price: 180, buying_price: 150, min_stock: 5 },
+                    { barcode: '6001000002', name: 'Cooking Oil', stock: 3, unit: 'L', price: 350, buying_price: 300, min_stock: 5 },
+                    { barcode: '6001000003', name: 'Blueband', stock: 18, unit: '500g', price: 220, buying_price: 190, min_stock: 5 },
+                    { barcode: '6001000004', name: 'Sugar', stock: 30, unit: 'kg', price: 160, buying_price: 135, min_stock: 10 },
+                    { barcode: '6001000005', name: 'Packet Milk', stock: 40, unit: 'pcs', price: 65, buying_price: 55, min_stock: 10 }
                 ]);
             });
 
@@ -342,6 +401,21 @@
             await loadDashboard();
             await loadInventoryView();
             await loadSalesHistory();
+            await loadDebtsList();
+            await checkLowStockAlerts();
+        }
+
+        async function checkLowStockAlerts() {
+            const products = await db.products.toArray();
+            const lowItems = products.filter(p => p.stock <= p.min_stock);
+            const banner = document.getElementById('lowStockBanner');
+            
+            if (lowItems.length > 0) {
+                document.getElementById('lowStockMessage').innerText = `Warning: ${lowItems.length} product(s) low in stock!`;
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
         }
 
         async function loadDashboard() {
@@ -374,6 +448,10 @@
 
         async function loadInventoryView() {
             const products = await db.products.toArray();
+            renderInventoryItems(products);
+        }
+
+        function renderInventoryItems(products) {
             const inventoryElem = document.getElementById('fullInventoryList');
             inventoryElem.innerHTML = '';
 
@@ -383,11 +461,14 @@
                     ? `<span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-md font-medium">Low stock</span>`
                     : `<span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-md font-medium">In stock</span>`;
 
+                const barcodeTag = item.barcode ? `<span class="text-[10px] text-gray-400 block">Barcode: ${item.barcode}</span>` : '';
+
                 inventoryElem.innerHTML += `
                     <div class="bg-white rounded-xl p-3 shadow-sm flex justify-between items-center border border-gray-100">
                         <div>
                             <h4 class="font-bold text-gray-800 text-sm">${item.name}</h4>
                             <div class="text-xs text-gray-500">${item.stock} ${item.unit} in stock • Buy: Ksh ${item.buying_price || 0} | Sell: Ksh ${item.price}</div>
+                            ${barcodeTag}
                         </div>
                         <div class="flex flex-col items-end gap-1">
                             ${statusBadge}
@@ -398,22 +479,96 @@
             });
         }
 
+        async function filterInventorySearch() {
+            const query = document.getElementById('inventorySearch').value.toLowerCase().trim();
+            const products = await db.products.toArray();
+            const filtered = products.filter(p => p.name.toLowerCase().includes(query) || (p.barcode && p.barcode.includes(query)));
+            renderInventoryItems(filtered);
+        }
+
         async function loadSalesHistory() {
             const sales = await db.sales.toArray();
             const salesElem = document.getElementById('salesHistoryList');
             salesElem.innerHTML = '';
 
             sales.reverse().forEach(s => {
+                const customerTag = s.customer ? `<br><span class="text-xs font-semibold text-red-500">Debtor: ${s.customer}</span>` : '';
                 salesElem.innerHTML += `
                     <div class="bg-white rounded-xl p-3 shadow-sm flex justify-between items-center border border-gray-100">
                         <div>
                             <h4 class="font-bold text-gray-800 text-sm">Ksh ${s.total.toLocaleString()} <span class="text-xs text-emerald-600 font-normal">(Profit: +Ksh ${(s.profit || 0).toLocaleString()})</span></h4>
                             <div class="text-xs text-gray-500">${s.method} • ${new Date(s.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                            ${customerTag}
                         </div>
                         <span class="text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-medium">${s.synced ? 'Synced' : 'Local'}</span>
                     </div>
                 `;
             });
+        }
+
+        async function loadDebtsList() {
+            const debts = await db.debts.where('settled').equals(0).toArray();
+            const debtListElem = document.getElementById('dashboardDebtList');
+            debtListElem.innerHTML = '';
+
+            let totalOutstanding = 0;
+            if (debts.length === 0) {
+                debtListElem.innerHTML = `<p class="text-xs text-gray-400 italic">No active customer debts.</p>`;
+            } else {
+                debts.forEach(d => {
+                    totalOutstanding += d.amount;
+                    debtListElem.innerHTML += `
+                        <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-xs">${d.customer_name}</h4>
+                                <div class="text-[11px] font-extrabold text-red-600">Ksh ${d.amount.toLocaleString()}</div>
+                            </div>
+                            <button onclick="settleDebt(${d.id})" class="text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded-lg transition-all">
+                                Settle
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('totalDebtBadge').innerText = `Total: Ksh ${totalOutstanding.toLocaleString()}`;
+        }
+
+        async function settleDebt(debtId) {
+            const debt = await db.debts.get(debtId);
+            if (!debt) return;
+
+            const confirmSettle = confirm(`Has ${debt.customer_name} paid their debt of Ksh ${debt.amount.toLocaleString()}?`);
+            if (!confirmSettle) return;
+
+            await db.debts.update(debtId, { settled: 1 });
+            
+            await db.sales.add({
+                total: debt.amount,
+                profit: 0,
+                method: 'CASH (DEBT PAID)',
+                customer: debt.customer_name,
+                synced: 0,
+                created_at: new Date().toISOString()
+            });
+
+            alert(`✅ Debt settled for ${debt.customer_name}!`);
+            loadAppData();
+        }
+
+        async function logExpensePrompt() {
+            const title = prompt("Expense Description (e.g. Tokens, Transport):");
+            if (!title) return;
+            const amount = parseFloat(prompt("Expense Amount (Ksh):"));
+            if (isNaN(amount) || amount <= 0) return;
+
+            await db.expenses.add({
+                title,
+                amount,
+                created_at: new Date().toISOString()
+            });
+
+            alert(`Logged expense: ${title} - Ksh ${amount}`);
+            loadAppData();
         }
 
         async function sellSingleProduct(productId) {
@@ -438,22 +593,38 @@
             }
 
             const totalPrice = qty * product.price;
-            const buyingPrice = product.buying_price || (product.price * 0.8); // Fallback estimate if not set
+            const buyingPrice = product.buying_price || (product.price * 0.8);
             const totalProfit = qty * (product.price - buyingPrice);
 
-            const method = prompt(`Selling ${qty} ${product.unit} of ${product.name}.\nTotal: Ksh ${totalPrice.toLocaleString()} | Profit: Ksh ${totalProfit.toLocaleString()}\n\nSelect Payment Method (MPESA, CASH, CREDIT):`, "MPESA");
+            let method = prompt(`Selling ${qty} ${product.unit} of ${product.name}.\nTotal: Ksh ${totalPrice.toLocaleString()}\n\nSelect Payment Method (MPESA, CASH, CREDIT):`, "MPESA");
             if (!method) return;
+            method = method.toUpperCase();
+
+            let customerName = "";
+            if (method === 'CREDIT' || method === 'MKOPO') {
+                method = 'CREDIT';
+                customerName = prompt("Enter Customer Name for this Mkopo:", "Customer");
+                if (!customerName) return;
+
+                await db.debts.add({
+                    customer_name: customerName,
+                    amount: totalPrice,
+                    settled: 0,
+                    created_at: new Date().toISOString()
+                });
+            }
 
             await db.products.update(productId, { stock: product.stock - qty });
             await db.sales.add({
                 total: totalPrice,
                 profit: totalProfit,
-                method: method.toUpperCase(),
+                method: method,
+                customer: customerName,
                 synced: 0,
                 created_at: new Date().toISOString()
             });
             
-            alert(`✅ Sale recorded successfully!\nTotal: Ksh ${totalPrice.toLocaleString()}\nProfit Made: +Ksh ${totalProfit.toLocaleString()}`);
+            alert(`✅ Sale recorded!\nTotal: Ksh ${totalPrice.toLocaleString()}`);
             loadAppData();
         }
 
@@ -461,16 +632,30 @@
             const amount = parseFloat(prompt("Enter total sale amount (Ksh):"));
             if (isNaN(amount) || amount <= 0) return;
             
-            // For general quick sales without a specific product selected, estimate 20% profit margin
-            const estimatedProfit = amount * 0.20;
-
-            const method = prompt("Enter payment method (MPESA / CASH / CREDIT):", "MPESA");
+            let method = prompt("Enter payment method (MPESA / CASH / CREDIT):", "MPESA");
             if (!method) return;
+            method = method.toUpperCase();
+
+            let customerName = "";
+            if (method === 'CREDIT') {
+                customerName = prompt("Enter Customer Name for this Mkopo:", "Customer");
+                if (!customerName) return;
+
+                await db.debts.add({
+                    customer_name: customerName,
+                    amount: amount,
+                    settled: 0,
+                    created_at: new Date().toISOString()
+                });
+            }
+
+            const estimatedProfit = amount * 0.20;
 
             await db.sales.add({
                 total: amount,
                 profit: estimatedProfit,
-                method: method.toUpperCase(),
+                method: method,
+                customer: customerName,
                 synced: 0,
                 created_at: new Date().toISOString()
             });
@@ -479,13 +664,15 @@
 
         async function addNewProductPrompt() {
             const name = prompt("Product Name (e.g., Rice, Sugar):");
-            const buyingPrice = parseFloat(prompt("Buying Price per unit from wholesaler (Ksh):"));
-            const price = parseFloat(prompt("Selling Price per unit to customer (Ksh):"));
+            const barcode = prompt("Scan/Enter Barcode Number (Optional):", "");
+            const buyingPrice = parseFloat(prompt("Buying Price per unit (Ksh):"));
+            const price = parseFloat(prompt("Selling Price per unit (Ksh):"));
             const stock = parseInt(prompt("Initial Stock Quantity:"));
             const unit = prompt("Unit (e.g., kg, L, pcs):", "kg");
 
             if (name && !isNaN(price) && !isNaN(stock)) {
                 await db.products.add({ 
+                    barcode: barcode || null,
                     name, 
                     price, 
                     buying_price: isNaN(buyingPrice) ? price * 0.8 : buyingPrice, 
@@ -509,34 +696,89 @@
         async function calculateMetrics() {
             const today = new Date().toISOString().split('T')[0];
             const sales = await db.sales.toArray();
-            const todaySales = sales.filter(s => s.created_at.startsWith(today));
+            const expenses = await db.expenses.toArray();
 
-            let total = 0, profit = 0, mpesa = 0, cash = 0, credit = 0;
+            const todaySales = sales.filter(s => s.created_at.startsWith(today));
+            const todayExpenses = expenses.filter(e => e.created_at.startsWith(today));
+
+            let totalSales = 0, grossProfit = 0, mpesa = 0, cash = 0, credit = 0;
             todaySales.forEach(s => {
-                total += s.total;
-                profit += (s.profit || 0);
+                totalSales += s.total;
+                grossProfit += (s.profit || 0);
                 if (s.method === 'MPESA') mpesa += s.total;
-                else if (s.method === 'CASH') cash += s.total;
+                else if (s.method === 'CASH' || s.method.includes('CASH')) cash += s.total;
                 else if (s.method === 'CREDIT') credit += s.total;
             });
 
-            const count = todaySales.length;
-            const avg = count > 0 ? Math.round(total / count) : 0;
+            let totalExpenseAmt = 0;
+            todayExpenses.forEach(e => totalExpenseAmt += e.amount);
 
-            document.getElementById('salesToday').innerText = `Ksh ${total.toLocaleString()}`;
-            document.getElementById('profitToday').innerText = `Ksh ${profit.toLocaleString()}`;
+            const netProfit = grossProfit - totalExpenseAmt;
+            const count = todaySales.length;
+            const avg = count > 0 ? Math.round(totalSales / count) : 0;
+
+            document.getElementById('salesToday').innerText = `Ksh ${totalSales.toLocaleString()}`;
+            document.getElementById('profitToday').innerText = `Ksh ${netProfit.toLocaleString()}`;
             document.getElementById('orderCount').innerText = count;
             document.getElementById('avgOrder').innerText = `Ksh ${avg.toLocaleString()}`;
             document.getElementById('mpesaSales').innerText = `Ksh ${mpesa.toLocaleString()}`;
             document.getElementById('cashSales').innerText = `Ksh ${cash.toLocaleString()}`;
             document.getElementById('creditSales').innerText = `Ksh ${credit.toLocaleString()}`;
+            document.getElementById('expensesToday').innerText = `Ksh ${totalExpenseAmt.toLocaleString()}`;
+        }
+
+        // BARCODE SCANNER CONTROLLER
+        function startBarcodeScan() {
+            document.getElementById('scannerModal').classList.remove('hidden');
+            html5QrCodeScanner = new Html5Qrcode("interactiveScanner");
+            html5QrCodeScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                async (decodedText) => {
+                    stopBarcodeScan();
+                    const product = await db.products.where('barcode').equals(decodedText).first();
+                    if (product) {
+                        sellSingleProduct(product.id);
+                    } else {
+                        alert(`No product found with barcode: ${decodedText}`);
+                    }
+                },
+                (error) => {}
+            );
+        }
+
+        function stopBarcodeScan() {
+            if (html5QrCodeScanner) {
+                html5QrCodeScanner.stop().then(() => {
+                    document.getElementById('scannerModal').classList.add('hidden');
+                }).catch(() => {
+                    document.getElementById('scannerModal').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('scannerModal').classList.add('hidden');
+            }
+        }
+
+        // WHATSAPP END-OF-DAY SUMMARY REPORT
+        async function shareWhatsAppReport() {
+            const today = new Date().toLocaleDateString();
+            const salesStr = document.getElementById('salesToday').innerText;
+            const profitStr = document.getElementById('profitToday').innerText;
+            const mpesaStr = document.getElementById('mpesaSales').innerText;
+            const cashStr = document.getElementById('cashSales').innerText;
+            const debtStr = document.getElementById('creditSales').innerText;
+            const expenseStr = document.getElementById('expensesToday').innerText;
+
+            const msg = `📊 *DUKATRACK DAILY REPORT* - ${activeShop ? activeShop.name : 'Duka'}\n📅 Date: ${today}\n------------------------------\n💰 Total Sales: ${salesStr}\n💵 Cash Received: ${cashStr}\n📱 M-Pesa Total: ${mpesaStr}\n📕 Mkopo (Debts): ${debtStr}\n💸 Expenses Today: ${expenseStr}\n------------------------------\n📈 *NET PROFIT: ${profitStr}*`;
+
+            const encodedMsg = encodeURIComponent(msg);
+            window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
         }
 
         function triggerSync() {
             alert("All local sales records for your duka are synced!");
         }
 
-        // Initialize Directory on load
         saveShopsList();
         renderDirectory();
     </script>
