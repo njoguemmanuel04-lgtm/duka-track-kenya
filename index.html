@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUKATRACK - Smart Shop System</title>
+    <title>DUKATRACK - Smart Duka Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -21,23 +21,23 @@
                 </div>
                 <div class="text-left">
                     <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight leading-none">DUKATRACK</h1>
-                    <p class="text-xs font-semibold text-gray-500 mt-1">Smart Duka System — Multi-Tenant</p>
+                    <p class="text-xs font-semibold text-gray-500 mt-1">Smart Duka Management System</p>
                 </div>
             </div>
 
-            <!-- CATEGORY BADGES -->
+            <!-- DUKA CATEGORY BADGES -->
             <div class="grid grid-cols-4 gap-2 pt-2">
                 <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
-                    <span class="text-xl">🌾</span>
-                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Feeds</span>
+                    <span class="text-xl">🍚</span>
+                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Flour/Sugar</span>
                 </div>
                 <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
-                    <span class="text-xl">🛒</span>
-                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Retail</span>
+                    <span class="text-xl">🛢️</span>
+                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Cooking Oil</span>
                 </div>
                 <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
-                    <span class="text-xl">🌱</span>
-                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Agrovet</span>
+                    <span class="text-xl">🧼</span>
+                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Household</span>
                 </div>
                 <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
                     <span class="text-xl">📦</span>
@@ -46,23 +46,23 @@
             </div>
         </div>
 
-        <!-- REGISTERED SHOPS DIRECTORY LIST -->
+        <!-- REGISTERED DUKAS DIRECTORY LIST -->
         <div class="bg-white rounded-3xl p-5 shadow-lg space-y-3">
             <h2 class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
-                <i class="fa-solid fa-shop text-emerald-600"></i> Registered Shops
+                <i class="fa-solid fa-shop text-emerald-600"></i> Registered Dukas
             </h2>
             <div id="shopDirectoryList" class="space-y-2">
                 <!-- Shops dynamically rendered here -->
             </div>
         </div>
 
-        <!-- CREATE NEW SHOP FORM -->
+        <!-- CREATE NEW DUKA FORM -->
         <div class="bg-white rounded-3xl p-5 shadow-lg space-y-3">
-            <h2 class="font-bold text-gray-800 text-base">Create New Shop</h2>
+            <h2 class="font-bold text-gray-800 text-base">Register New Duka</h2>
             <form onsubmit="handleCreateShop(event)" class="space-y-3">
                 <div>
-                    <label class="text-xs font-bold text-gray-700 block mb-1">Shop Name *</label>
-                    <input type="text" id="newShopName" placeholder="e.g. Wang'uru Agrovet" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
+                    <label class="text-xs font-bold text-gray-700 block mb-1">Duka Name *</label>
+                    <input type="text" id="newShopName" placeholder="e.g. Mwea General Store" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-700 block mb-1">Phone *</label>
@@ -70,21 +70,21 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-700 block mb-1">Location</label>
-                    <input type="text" id="newShopLocation" placeholder="Mwea, Wang'uru" class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
+                    <input type="text" id="newShopLocation" placeholder="Mwea Town" class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-gray-700 block mb-1">Shop Password / PIN *</label>
-                    <input type="password" id="newShopPin" placeholder="Enter PIN" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
+                    <label class="text-xs font-bold text-gray-700 block mb-1">Duka PIN *</label>
+                    <input type="password" id="newShopPin" placeholder="4-digit PIN" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
                 </div>
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-plus text-xs"></i> Create Shop & Enter
+                    <i class="fa-solid fa-plus text-xs"></i> Register & Open Duka
                 </button>
             </form>
         </div>
     </div>
 
 
-    <!-- ================= 2. ACTIVE SHOP POS DASHBOARD (HIDDEN INITIALLY) ================= -->
+    <!-- ================= 2. ACTIVE DUKA POS DASHBOARD (HIDDEN INITIALLY) ================= -->
     <div id="view-app" class="hidden bg-gray-100 min-h-screen pb-24">
         
         <!-- TOP HEADER -->
@@ -94,7 +94,7 @@
                     <i class="fa-solid fa-store text-lg"></i>
                 </div>
                 <div>
-                    <h1 id="headerActiveShopName" class="font-bold text-gray-800 text-base leading-none tracking-wide">Mwea Shop</h1>
+                    <h1 id="headerActiveShopName" class="font-bold text-gray-800 text-base leading-none tracking-wide">Mwea Duka</h1>
                     <span id="networkStatus" class="text-xs font-semibold text-emerald-600">● Online (Auto-Syncing)</span>
                 </div>
             </div>
@@ -196,19 +196,19 @@
 
             <!-- PROFILE TAB -->
             <div id="tab-profile" class="space-y-4 hidden">
-                <h2 class="text-xl font-bold text-gray-800">Shop Profile</h2>
+                <h2 class="text-xl font-bold text-gray-800">Duka Profile</h2>
                 <div class="bg-white rounded-2xl p-4 shadow-sm space-y-4">
                     <div class="flex items-center space-x-3 border-b pb-4">
                         <div class="bg-emerald-100 text-emerald-700 p-3 rounded-full text-xl font-bold">
                             <i class="fa-solid fa-store"></i>
                         </div>
                         <div>
-                            <h3 id="profileShopName" class="font-bold text-gray-800 text-base">My Shop</h3>
+                            <h3 id="profileShopName" class="font-bold text-gray-800 text-base">My Duka</h3>
                             <p id="profileShopLocation" class="text-xs text-gray-500">Location: Mwea</p>
                         </div>
                     </div>
                     <button onclick="exitToDirectory()" class="w-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold py-2.5 rounded-xl hover:bg-emerald-100">
-                        ← Exit to Shop Directory
+                        ← Back to Duka Directory
                     </button>
                 </div>
             </div>
@@ -236,13 +236,13 @@
         </nav>
     </div>
 
-    <!-- JAVASCRIPT MULTI-TENANT ENGINE -->
+    <!-- JAVASCRIPT MULTI-TENANT DUKA ENGINE -->
     <script>
-        // System master shop registry stored locally
+        // Default Kenyan Retail Dukas Directory
         let registeredShops = JSON.parse(localStorage.getItem('dukatrack_shops_list')) || [
-            { name: "Dairy feeds", location: "Mwea", phone: "0711000001", id: "shop_1" },
-            { name: "Farmgate", location: "Wang'uru", phone: "0722000002", id: "shop_2" },
-            { name: "Wang'uru agrovet", location: "Mwea", phone: "0733000003", id: "shop_3" }
+            { name: "Mwea General Store", location: "Mwea Town", phone: "0711000001", id: "duka_1" },
+            { name: "Wambui Provision", location: "Wang'uru", phone: "0722000002", id: "duka_2" },
+            { name: "Kamau Retail Shop", location: "Kutus", phone: "0733000003", id: "duka_3" }
         ];
 
         let activeShop = null;
@@ -261,7 +261,7 @@
                     <div class="flex justify-between items-center p-3 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-gray-100 transition-all">
                         <div>
                             <div class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
-                                🔒 ${shop.name}
+                                🛒 ${shop.name}
                             </div>
                             <div class="text-xs text-gray-400 font-medium">${shop.location || 'Mwea'}</div>
                         </div>
@@ -277,10 +277,10 @@
             event.preventDefault();
             const name = document.getElementById('newShopName').value.trim();
             const phone = document.getElementById('newShopPhone').value.trim();
-            const location = document.getElementById('newShopLocation').value.trim() || "Mwea, Wang'uru";
+            const location = document.getElementById('newShopLocation').value.trim() || "Mwea";
             const pin = document.getElementById('newShopPin').value.trim();
 
-            const shopId = 'shop_' + Date.now();
+            const shopId = 'duka_' + Date.now();
             const newShop = { id: shopId, name, phone, location, pin };
 
             registeredShops.push(newShop);
@@ -294,7 +294,6 @@
             activeShop = registeredShops.find(s => s.id === shopId);
             if (!activeShop) return;
 
-            // Hide Landing, Show POS Dashboard
             document.getElementById('view-landing').classList.add('hidden');
             document.getElementById('view-app').classList.remove('hidden');
 
@@ -302,7 +301,6 @@
             document.getElementById('profileShopName').innerText = activeShop.name;
             document.getElementById('profileShopLocation').innerText = `Location: ${activeShop.location}`;
 
-            // Initialize Dexie IndexedDB for THIS SPECIFIC SHOP
             db = new Dexie(`DukaTrack_${activeShop.id}`);
             db.version(1).stores({
                 products: '++id, name, stock, unit, price, min_stock',
@@ -314,7 +312,8 @@
                     { name: 'Ugali Flour', stock: 24, unit: 'kg', price: 180, min_stock: 5 },
                     { name: 'Cooking Oil', stock: 12, unit: 'L', price: 350, min_stock: 15 },
                     { name: 'Blueband', stock: 18, unit: '500g', price: 220, min_stock: 5 },
-                    { name: 'Sugar', stock: 30, unit: 'kg', price: 160, min_stock: 10 }
+                    { name: 'Sugar', stock: 30, unit: 'kg', price: 160, min_stock: 10 },
+                    { name: 'Packet Milk', stock: 40, unit: 'pcs', price: 65, min_stock: 10 }
                 ]);
             });
 
@@ -327,7 +326,6 @@
             renderDirectory();
         }
 
-        // TAB SWITCHING LOGIC
         function switchTab(tabName) {
             ['dashboard', 'sales', 'inventory', 'profile'].forEach(tab => {
                 document.getElementById(`tab-${tab}`).classList.add('hidden');
@@ -454,10 +452,10 @@
         }
 
         async function addNewProductPrompt() {
-            const name = prompt("Product Name (e.g., Rice):");
+            const name = prompt("Product Name (e.g., Rice, Sugar):");
             const price = parseFloat(prompt("Selling Price per unit (Ksh):"));
             const stock = parseInt(prompt("Initial Stock Quantity:"));
-            const unit = prompt("Unit (e.g., kg, L, pcs):", "pcs");
+            const unit = prompt("Unit (e.g., kg, L, pcs):", "kg");
 
             if (name && !isNaN(price) && !isNaN(stock)) {
                 await db.products.add({ name, price, stock, unit, min_stock: 5 });
@@ -499,10 +497,10 @@
         }
 
         function triggerSync() {
-            alert("All local sales records for your shop are synced!");
+            alert("All local sales records for your duka are synced!");
         }
 
-        // Initialize Landing Directory
+        // Initialize Directory on load
         saveShopsList();
         renderDirectory();
     </script>
