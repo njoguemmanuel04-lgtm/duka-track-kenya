@@ -20,7 +20,7 @@
             </div>
             <form id="login-form" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-600">Shop Name or ID</label>
+                    <label class="block text-xs font-semibold uppercase text-gray-600">Shop Name</label>
                     <input type="text" id="shop-query" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="e.g. Njogu Duka">
                 </div>
                 <div>
@@ -45,7 +45,7 @@
                     <span id="shop-name-badge" class="bg-emerald-800 text-emerald-200 text-xs px-2.5 py-1 rounded-full font-medium">Loading Duka...</span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span id="user-email-display" class="text-sm text-emerald-100 hidden sm:inline">Attendant Session</span>
+                    <span class="text-sm text-emerald-100 hidden sm:inline">Register Active</span>
                     <button id="logout-btn" class="bg-emerald-800 hover:bg-emerald-900 text-xs px-3 py-1.5 rounded font-semibold transition">
                         Lock Register
                     </button>
@@ -96,9 +96,6 @@
                         <button id="checkout-cash-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-md">
                             Complete Sale (Cash)
                         </button>
-                        <button id="checkout-mpesa-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center space-x-2">
-                            <span>Lipa Na M-Pesa (STK Push)</span>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -124,7 +121,6 @@
         const authError = document.getElementById('auth-error');
         const logoutBtn = document.getElementById('logout-btn');
         const shopBadge = document.getElementById('shop-name-badge');
-        const userEmailDisplay = document.getElementById('user-email-display');
         const productGrid = document.getElementById('product-grid');
         const addProductForm = document.getElementById('add-product-form');
         const cartItemsContainer = document.getElementById('cart-items');
@@ -156,7 +152,7 @@
             const { data: shops, error } = await supabaseClient
                 .from('shops')
                 .select('*')
-                .ilike('name', `%${shopQuery}%`)
+                .ilike('shop_name', `%${shopQuery}%`)
                 .eq('pin', pinInput)
                 .limit(1);
 
@@ -169,9 +165,9 @@
             currentShopId = shop.id;
             
             localStorage.setItem('duka_active_shop_id', shop.id);
-            localStorage.setItem('duka_active_shop_name', shop.name);
+            localStorage.setItem('duka_active_shop_name', shop.shop_name);
 
-            enterDashboard(shop.name);
+            enterDashboard(shop.shop_name);
         });
 
         // Transition to App Dashboard
@@ -189,12 +185,12 @@
             window.location.reload();
         });
 
-        // Fetch Products filtered by active shop_id
+        // Fetch Products filtered by active shop_name_id
         async function fetchProducts() {
             const { data: products, error } = await supabaseClient
                 .from('products')
                 .select('*')
-                .eq('shop_id', currentShopId)
+                .eq('shop_name_id', currentShopId)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -235,7 +231,7 @@
 
             const { error } = await supabaseClient
                 .from('products')
-                .insert([{ shop_id: currentShopId, name, selling_price, buying_price: selling_price * 0.7, stock_qty }]);
+                .insert([{ shop_name_id: currentShopId, name, selling_price, buying_price: selling_price * 0.7, stock_qty }]);
 
             if (error) {
                 alert('Error adding product: ' + error.message);
@@ -289,7 +285,7 @@
 
             const { error } = await supabaseClient
                 .from('sales')
-                .insert([{ shop_id: currentShopId, total_amount: totalAmount, payment_method: 'CASH' }]);
+                .insert([{ shop_name_id: currentShopId, total_amount: totalAmount, payment_method: 'CASH' }]);
 
             if (error) {
                 alert('Checkout failed: ' + error.message);
