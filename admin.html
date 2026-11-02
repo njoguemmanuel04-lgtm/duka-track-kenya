@@ -3,110 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUKATRACK - Super Admin Portal</title>
+    <title>Duka OS - Super Admin Portal</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-emerald-900 font-sans min-h-screen p-4 flex justify-center items-center">
+<body class="bg-gray-100 text-gray-900 font-sans antialiased">
 
-    <div class="w-full max-w-md space-y-4">
-        
-        <!-- ADMIN LOGIN / HEADER -->
-        <div class="bg-white rounded-3xl p-5 shadow-lg space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
-                <div class="flex items-center gap-2">
-                    <div class="bg-emerald-100 text-emerald-700 p-2.5 rounded-2xl">
-                        <i class="fa-solid fa-shield-halved text-lg"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-extrabold text-gray-800 text-base leading-none">DUKATRACK Admin</h1>
-                        <span class="text-[10px] text-gray-400">Platform Management Portal</span>
-                    </div>
-                </div>
-                <a href="index.html" class="text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 px-3 py-1.5 rounded-xl font-bold">
-                    ← Back to Duka POS
-                </a>
+    <!-- ADMIN LOGIN GATE -->
+    <div id="admin-auth-container" class="min-h-screen flex items-center justify-center px-4">
+        <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl font-extrabold text-blue-600">Super Admin</h1>
+                <p class="text-sm text-gray-500 mt-1">Enter platform master password</p>
             </div>
-
-            <div class="grid grid-cols-2 gap-2">
-                <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-100">
-                    <div class="text-[10px] text-emerald-700 font-bold uppercase">Total Shops</div>
-                    <div id="adminTotalShops" class="text-xl font-extrabold text-emerald-900">0</div>
+            <form id="admin-login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-600">Master Password</label>
+                    <input type="password" id="admin-pass" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="••••••••">
                 </div>
-                <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-100">
-                    <div class="text-[10px] text-emerald-700 font-bold uppercase">Cloud Status</div>
-                    <div id="adminCloudStatus" class="text-xs font-bold text-emerald-800 mt-1">Connected 🟢</div>
-                </div>
-            </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition duration-200">
+                    Access Control Panel
+                </button>
+            </form>
+            <div id="admin-auth-error" class="mt-4 text-center text-sm text-red-500 font-medium"></div>
         </div>
-
-        <!-- REGISTERED SHOPS TABLE FROM SUPABASE -->
-        <div class="bg-white rounded-3xl p-5 shadow-lg space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
-                    <i class="fa-solid fa-shop text-emerald-600"></i> All Connected Dukas
-                </h2>
-                <button onclick="loadAdminData()" class="text-xs text-emerald-600 font-bold hover:underline">Refresh</button>
-            </div>
-            <div id="adminShopList" class="space-y-2">
-                <p class="text-xs text-gray-400 italic">Fetching cloud records...</p>
-            </div>
-        </div>
-
     </div>
 
-    <!-- ADMIN JAVASCRIPT ENGINE -->
+    <!-- MAIN ADMIN DASHBOARD (Hidden until logged in) -->
+    <div id="admin-app-container" class="hidden min-h-screen flex flex-col">
+        <!-- Top Navbar -->
+        <header class="bg-blue-900 text-white shadow">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <span class="text-xl font-bold tracking-tight">🛡️ Duka OS Admin</span>
+                </div>
+                <div>
+                    <button id="admin-logout-btn" class="bg-blue-800 hover:bg-blue-700 text-xs px-3 py-1.5 rounded font-semibold transition">
+                        Lock Admin Panel
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 space-y-6">
+            
+            <!-- Platform Metrics Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-xs uppercase font-bold text-gray-400">Total Registered Shops</p>
+                    <h3 id="stat-shops-count" class="text-3xl font-black text-blue-600 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-xs uppercase font-bold text-gray-400">Platform Gross Revenue</p>
+                    <h3 id="stat-total-rev" class="text-3xl font-black text-gray-900 mt-1">KES 0.00</h3>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-xs uppercase font-bold text-gray-400">Platform Total Profit</p>
+                    <h3 id="stat-total-prof" class="text-3xl font-black text-emerald-600 mt-1">KES 0.00</h3>
+                </div>
+            </div>
+
+            <!-- Create New Shop Card -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800 mb-3">Provision New Duka Shop</h2>
+                <form id="create-shop-form" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input type="text" id="new-shop-name" placeholder="Shop Name (e.g. Kisumu Duka)" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="new-shop-pin" placeholder="Access PIN (e.g. 5678)" required class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded-lg transition">Create & Provision Shop</button>
+                </form>
+            </div>
+
+            <!-- Shops Directory Table -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">All Platform Shops Directory</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-gray-600">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                            <tr>
+                                <th class="p-3">Shop Name</th>
+                                <th class="p-3">Access PIN</th>
+                                <th class="p-3">Created On</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-shops-table">
+                            <tr><td colspan="4" class="p-4 text-center text-gray-400">Loading shops directory...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
     <script>
-        const SUPABASE_URL = "https://torzbgvwjhthzuifdses.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcnpiZ3Z3amh0aHp1aWZkc2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyODQ4OTAsImV4cCI6MjEwODg2MDg5MH0.Jjzgt-mCxA94Y1lG6fLDLupteE8RZs6dygJO5BVClKY";
-        const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        const SUPABASE_URL = 'https://torzbgvwjhthzuifdses.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcnpiZ3Z3amh0aHp1aWZkc2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyODQ4OTAsImV4cCI6MjEwODg2MDg5MH0.Jjzgt-mCxA94Y1lG6fLDLupteE8RZs6dygJO5BVClKY';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        async function loadAdminData() {
-            // Optional basic prompt password protection
-            const pwd = prompt("Enter Super Admin Access Key:", "admin254");
-            if (pwd !== "admin254") {
-                alert("Incorrect Key!");
-                window.location.href = "index.html";
-                return;
+        // CHANGE THIS TO YOUR SECURE ADMIN PASSWORD
+        const MASTER_ADMIN_PASSWORD = 'AdminPassword123';
+
+        const authContainer = document.getElementById('admin-auth-container');
+        const appContainer = document.getElementById('admin-app-container');
+        const loginForm = document.getElementById('admin-login-form');
+        const authError = document.getElementById('admin-auth-error');
+        const logoutBtn = document.getElementById('admin-logout-btn');
+        const createShopForm = document.getElementById('create-shop-form');
+        const shopsTable = document.getElementById('admin-shops-table');
+
+        // Session check
+        function checkAdminSession() {
+            if (localStorage.getItem('duka_is_super_admin') === 'true') {
+                authContainer.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                loadAdminData();
+            } else {
+                authContainer.classList.remove('hidden');
+                appContainer.classList.add('hidden');
             }
-
-            if (!supabase) {
-                document.getElementById('adminShopList').innerHTML = `<p class="text-xs text-red-500">Supabase client failed to load.</p>`;
-                return;
-            }
-
-            const { data: dukas, error } = await supabase.from('dukas').select('*').order('created_at', { ascending: false });
-            
-            if (error) {
-                document.getElementById('adminShopList').innerHTML = `<p class="text-xs text-red-500">Error fetching cloud shops.</p>`;
-                return;
-            }
-
-            document.getElementById('adminTotalShops').innerText = dukas ? dukas.length : 0;
-            
-            const listElem = document.getElementById('adminShopList');
-            listElem.innerHTML = '';
-
-            if (!dukas || dukas.length === 0) {
-                listElem.innerHTML = `<p class="text-xs text-gray-400 italic">No shops registered in the cloud yet.</p>`;
-                return;
-            }
-
-            dukas.forEach(d => {
-                listElem.innerHTML += `
-                    <div class="bg-gray-50 p-3 rounded-2xl border border-gray-100 flex justify-between items-center">
-                        <div>
-                            <div class="font-bold text-gray-800 text-sm">🛒 ${d.name}</div>
-                            <div class="text-xs text-gray-400">📱 ${d.phone} • 📍 ${d.location || 'Mwea'}</div>
-                        </div>
-                        <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full font-bold">Active</span>
-                    </div>
-                `;
-            });
         }
 
-        loadAdminData();
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            authError.textContent = '';
+            const passwordInput = document.getElementById('admin-pass').value;
+
+            if (passwordInput === MASTER_ADMIN_PASSWORD) {
+                localStorage.setItem('duka_is_super_admin', 'true');
+                checkAdminSession();
+            } else {
+                authError.textContent = 'Incorrect Master Password!';
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('duka_is_super_admin');
+            window.location.reload();
+        });
+
+        // Load Platform Analytics & Shops Directory
+        async function loadAdminData() {
+            // 1. Fetch all shops
+            const { data: shops, error: shopsErr } = await supabaseClient
+                .from('shops')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (shopsErr) {
+                console.error('Error fetching shops:', shopsErr);
+                return;
+            }
+
+            document.getElementById('stat-shops-count').textContent = shops.length;
+            shopsTable.innerHTML = '';
+
+            if (shops.length === 0) {
+                shopsTable.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No shops found on platform.</td></tr>';
+            } else {
+                shops.forEach(shop => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b';
+                    tr.innerHTML = `
+                        <td class="p-3 font-bold text-gray-800">${shop.shop_name}</td>
+                        <td class="p-3 font-mono bg-gray-50">${shop.pin}</td>
+                        <td class="p-3 text-xs text-gray-500">${new Date(shop.created_at).toLocaleDateString()}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="deleteShop('${shop.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs px-2.5 py-1 rounded font-semibold transition">Delete Shop</button>
+                        </td>
+                    `;
+                    shopsTable.appendChild(tr);
+                });
+            }
+
+            // 2. Fetch platform-wide sales analytics
+            const { data: sales, error: salesErr } = await supabaseClient
+                .from('sales')
+                .select('total_amount, profit');
+
+            if (!salesErr && sales) {
+                let totalRev = sales.reduce((acc, s) => acc + (s.total_amount || 0), 0);
+                let totalProf = sales.reduce((acc, s) => acc + (s.profit || 0), 0);
+
+                document.getElementById('stat-total-rev').textContent = `KES ${totalRev.toFixed(2)}`;
+                document.getElementById('stat-total-prof').textContent = `KES ${totalProf.toFixed(2)}`;
+            }
+        }
+
+        // Provision New Shop Action
+        createShopForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const shop_name = document.getElementById('new-shop-name').value.trim();
+            const pin = document.getElementById('new-shop-pin').value.trim();
+
+            const { error } = await supabaseClient
+                .from('shops')
+                .insert([{ shop_name, pin }]);
+
+            if (error) {
+                alert('Failed to create shop: ' + error.message);
+            } else {
+                alert(`Shop "${shop_name}" successfully provisioned!`);
+                createShopForm.reset();
+                loadAdminData();
+            }
+        });
+
+        // Delete Shop Action
+        async function deleteShop(shopId) {
+            if (!confirm('WARNING: Deleting this shop will permanently remove all its inventory and sales history. Proceed?')) return;
+
+            const { error } = await supabaseClient.from('shops').delete().eq('id', shopId);
+            if (error) {
+                alert('Error deleting shop: ' + error.message);
+            } else {
+                loadAdminData();
+            }
+        }
+
+        checkAdminSession();
     </script>
 </body>
 </html>
