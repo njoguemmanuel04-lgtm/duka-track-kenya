@@ -12,18 +12,28 @@
             console.warn("Supabase init error:", e);
         }
 
-        let registeredShops = [];
+        let registeredShops = JSON.parse(localStorage.getItem('dukatrack_shops_list')) || [
+            { name: "Mwea shop", location: "Mwea Town", phone: "0711000001", id: "duka_1" },
+            { name: "Wambui Provision", location: "Wang'uru", phone: "0722000002", id: "duka_2" },
+            { name: "Kamau Retail Shop", location: "Kutus", phone: "0733000003", id: "duka_3" }
+        ];
+
         let activeShop = null;
         let db = null;
         let html5QrCodeScanner = null;
 
-        function drawDirectoryUI() {
+        function saveShopsList() {
+            localStorage.setItem('dukatrack_shops_list', JSON.stringify(registeredShops));
+        }
+
+        // Render Directory instantly from LocalStorage/State
+        function renderDirectory() {
             const listElem = document.getElementById('shopDirectoryList');
             if (!listElem) return;
 
             listElem.innerHTML = '';
             if (!registeredShops || registeredShops.length === 0) {
-                listElem.innerHTML = `<p class="text-xs text-gray-400 italic py-2 text-center">No dukas found in cloud or local storage.</p>`;
+                listElem.innerHTML = `<p class="text-xs text-gray-400 italic py-2 text-center">No dukas registered yet.</p>`;
                 return;
             }
 
@@ -42,38 +52,28 @@
                     </div>
                 `;
             });
-        }
 
-        // Force fetch directly from Supabase cloud first
-        async function renderDirectory() {
-            const listElem = document.getElementById('shopDirectoryList');
-            if (listElem) listElem.innerHTML = `<p class="text-xs text-gray-400 italic py-2 text-center">Syncing with cloud...</p>`;
-
-            let cloudLoaded = false;
+            // Background cloud sync check (non-blocking)
             if (supabase) {
-                try {
-                    const { data: cloudDukas, error } = await supabase.from('dukas').select('*').order('created_at', { ascending: false });
-                    if (!error && cloudDukas) {
-                        registeredShops = cloudDukas;
-                        localStorage.setItem('dukatrack_shops_list', JSON.stringify(registeredShops));
-                        cloudLoaded = true;
+                supabase.from('dukas').select('*').then(({ data, error }) => {
+                    if (!error && data && data.length > 0) {
+                        let updated = false;
+                        data.forEach(cd => {
+                            if (!registeredShops.some(s => s.id === cd.id)) {
+                                registeredShops.push({ id: cd.id, name: cd.name, phone: cd.phone, location: cd.location });
+                                updated = true;
+                            }
+                        });
+                        if (updated) {
+                            saveShopsList();
+                            renderDirectory();
+                        }
                     }
-                } catch (e) {
-                    console.warn("Cloud fetch failed, falling back to local storage");
-                }
+                }).catch(() => {});
             }
-
-            // Fallback to local storage if offline or cloud fetch failed
-            if (!cloudLoaded) {
-                registeredShops = JSON.parse(localStorage.getItem('dukatrack_shops_list')) || [
-                    { name: "Mwea shop", location: "Mwea Town", phone: "0711000001", id: "duka_1" }
-                ];
-            }
-
-            drawDirectoryUI();
         }
 
-        async function handleCreateShop(event) {
+        function handleCreateShop(event) {
             event.preventDefault();
             const nameInput = document.getElementById('newShopName');
             const phoneInput = document.getElementById('newShopPhone');
@@ -90,30 +90,20 @@
             const shopId = 'duka_' + Date.now();
             const newShop = { id: shopId, name, phone, location, pin };
 
-            // Save to Supabase Cloud immediately
-            if (supabase) {
-                try {
-                    const { error } = await supabase.from('dukas').insert([{ id: shopId, name, phone, location, pin }]);
-                    if (error) {
-                        alert("Cloud save error: " + error.message);
-                        return;
-                    }
-                } catch (err) {
-                    alert("Network error while saving to cloud.");
-                    return;
-                }
-            }
-
-            // Update local state and storage
-            registeredShops.unshift(newShop);
-            localStorage.setItem('dukatrack_shops_list', JSON.stringify(registeredShops));
+            registeredShops.push(newShop);
+            saveShopsList();
+            renderDirectory();
 
             nameInput.value = '';
             phoneInput.value = '';
             if (locInput) locInput.value = '';
             pinInput.value = '';
 
-            renderDirectory();
+            // Non-blocking background cloud save
+            if (supabase) {
+                supabase.from('dukas').insert([{ id: shopId, name, phone, location, pin }]).then(() => {}).catch(() => {});
+            }
+
             enterShop(shopId);
         }
 
