@@ -1,305 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUKATRACK - Smart Duka Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body class="bg-emerald-900 font-sans min-h-screen">
-
-    <!-- ================= 1. LANDING / SHOP DIRECTORY VIEW ================= -->
-    <div id="view-landing" class="p-4 max-w-md mx-auto space-y-4">
-        
-        <!-- BRANDING HEADER CARD -->
-        <div class="bg-white rounded-3xl p-5 shadow-lg space-y-3 text-center">
-            <div class="flex justify-between items-center px-1">
-                <span class="text-xs font-semibold text-gray-400">PWA Offline-First</span>
-                <!-- SEPARATE ADMIN PAGE LINK -->
-                <a href="admin.html" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 flex items-center gap-1">
-                    <i class="fa-solid fa-shield-halved text-xs"></i> Admin Portal
-                </a>
-            </div>
-            <div class="flex justify-center items-center gap-3">
-                <div class="bg-emerald-100 text-emerald-700 p-3 rounded-2xl text-2xl">
-                    <i class="fa-solid fa-store text-emerald-600"></i>
-                </div>
-                <div class="text-left">
-                    <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight leading-none">DUKATRACK</h1>
-                    <p class="text-xs font-semibold text-gray-500 mt-1">Smart Duka Management System</p>
-                </div>
-            </div>
-
-            <!-- DUKA CATEGORY BADGES -->
-            <div class="grid grid-cols-4 gap-2 pt-2">
-                <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
-                    <span class="text-xl">🍚</span>
-                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Flour/Sugar</span>
-                </div>
-                <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
-                    <span class="text-xl">🛢️</span>
-                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Cooking Oil</span>
-                </div>
-                <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
-                    <span class="text-xl">🧼</span>
-                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Household</span>
-                </div>
-                <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-100 flex flex-col items-center">
-                    <span class="text-xl">📦</span>
-                    <span class="text-[10px] font-bold text-emerald-800 mt-1">Stock</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- REGISTERED DUKAS DIRECTORY LIST -->
-        <div class="bg-white rounded-3xl p-5 shadow-lg space-y-3">
-            <h2 class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
-                <i class="fa-solid fa-shop text-emerald-600"></i> Registered Dukas
-            </h2>
-            <div id="shopDirectoryList" class="space-y-2"></div>
-        </div>
-
-        <!-- CREATE NEW DUKA FORM -->
-        <div class="bg-white rounded-3xl p-5 shadow-lg space-y-3">
-            <h2 class="font-bold text-gray-800 text-base">Register New Duka</h2>
-            <form onsubmit="handleCreateShop(event)" class="space-y-3">
-                <div>
-                    <label class="text-xs font-bold text-gray-700 block mb-1">Duka Name *</label>
-                    <input type="text" id="newShopName" placeholder="e.g. Mwea General Store" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-gray-700 block mb-1">Phone *</label>
-                    <input type="tel" id="newShopPhone" placeholder="07..." required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-gray-700 block mb-1">Location</label>
-                    <input type="text" id="newShopLocation" placeholder="Mwea Town" class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-gray-700 block mb-1">Duka PIN *</label>
-                    <input type="password" id="newShopPin" placeholder="4-digit PIN" required class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-emerald-600">
-                </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 rounded-2xl text-sm shadow-md transition-all flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-plus text-xs"></i> Register & Open Duka
-                </button>
-            </form>
-        </div>
-    </div>
-
-
-    <!-- ================= 2. ACTIVE DUKA POS DASHBOARD ================= -->
-    <div id="view-app" class="hidden bg-gray-100 min-h-screen pb-24">
-        
-        <!-- TOP HEADER -->
-        <header class="bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <div class="bg-emerald-600 text-white p-2 rounded-lg">
-                    <i class="fa-solid fa-store text-lg"></i>
-                </div>
-                <div>
-                    <h1 id="headerActiveShopName" class="font-bold text-gray-800 text-base leading-none tracking-wide">Mwea shop</h1>
-                    <span id="networkStatus" class="text-xs font-semibold text-emerald-600">● Cloud Syncing</span>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="startBarcodeScan()" class="p-2 text-emerald-700 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1 bg-emerald-50 rounded-lg border border-emerald-200">
-                    <i class="fa-solid fa-barcode text-sm"></i> Scan
-                </button>
-                <button onclick="shareWhatsAppReport()" class="p-2 text-emerald-600 hover:text-emerald-700 text-sm flex items-center gap-1 bg-gray-100 rounded-lg" title="WhatsApp Summary">
-                    <i class="fa-brands fa-whatsapp text-lg text-emerald-600"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- BARCODE SCANNER MODAL -->
-        <div id="scannerModal" class="hidden fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center p-4">
-            <div class="bg-white rounded-2xl p-4 w-full max-w-sm space-y-3 relative text-center">
-                <button onclick="stopBarcodeScan()" class="absolute top-2 right-3 text-gray-500 text-xl font-bold">&times;</button>
-                <h3 class="font-bold text-gray-800 text-sm">Scan Product Barcode</h3>
-                <div id="interactiveScanner" class="w-full rounded-xl overflow-hidden bg-black h-64"></div>
-                <p class="text-xs text-gray-500">Point camera directly at product barcode</p>
-            </div>
-        </div>
-
-        <!-- MAIN DASHBOARD CONTENT -->
-        <main class="p-4 max-w-md mx-auto space-y-4">
-
-            <!-- REAL-TIME LOW STOCK ALERT BANNER -->
-            <div id="lowStockBanner" class="hidden bg-amber-500 text-white rounded-2xl p-3 shadow-md flex justify-between items-center text-xs font-bold">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-triangle-exclamation text-base"></i>
-                    <span id="lowStockMessage">Attention: Some items are low in stock!</span>
-                </div>
-                <button onclick="switchTab('inventory')" class="bg-white text-amber-800 px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase">Restock</button>
-            </div>
-
-            <!-- DASHBOARD TAB -->
-            <div id="tab-dashboard" class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-800">Dashboard</h2>
-                    <button onclick="quickSaleModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm flex items-center gap-1">
-                        <i class="fa-solid fa-plus"></i> New Sale
-                    </button>
-                </div>
-
-                <!-- MAIN SALES & NET PROFIT CARD -->
-                <div class="bg-emerald-100/70 border border-emerald-200 rounded-2xl p-4 shadow-sm space-y-3">
-                    <div>
-                        <div class="flex items-center space-x-1 text-emerald-800 text-xs font-medium mb-1">
-                            <i class="fa-solid fa-arrow-trend-up"></i>
-                            <span>Sales Today</span>
-                        </div>
-                        <div id="salesToday" class="text-3xl font-extrabold text-gray-900">Ksh 0</div>
-                    </div>
-                    
-                    <div class="grid grid-cols-3 gap-2 pt-1 border-t border-emerald-200/60">
-                        <div class="bg-white rounded-xl p-2.5 shadow-sm text-center">
-                            <div class="text-[10px] text-emerald-700 font-medium mb-0.5">Net Profit Today</div>
-                            <div id="profitToday" class="text-xs font-extrabold text-emerald-800">Ksh 0</div>
-                        </div>
-                        <div class="bg-white rounded-xl p-2.5 shadow-sm text-center">
-                            <div class="text-[10px] text-emerald-700 font-medium mb-0.5">Orders</div>
-                            <div id="orderCount" class="text-xs font-extrabold text-gray-800">0</div>
-                        </div>
-                        <div class="bg-white rounded-xl p-2.5 shadow-sm text-center">
-                            <div class="text-[10px] text-emerald-700 font-medium mb-0.5">Avg Order</div>
-                            <div id="avgOrder" class="text-xs font-extrabold text-gray-800">Ksh 0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PAYMENT BREAKDOWN -->
-                <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-gray-800 text-sm">Payment Breakdown</h3>
-                        <span class="text-xs text-gray-400">Today</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 text-center">
-                        <div class="bg-gray-50 p-2 rounded-lg border">
-                            <div class="text-xs text-gray-500">M-Pesa</div>
-                            <div id="mpesaSales" class="font-bold text-gray-800 text-sm">Ksh 0</div>
-                        </div>
-                        <div class="bg-gray-50 p-2 rounded-lg border">
-                            <div class="text-xs text-gray-500">Cash</div>
-                            <div id="cashSales" class="font-bold text-gray-800 text-sm">Ksh 0</div>
-                        </div>
-                        <div class="bg-gray-50 p-2 rounded-lg border">
-                            <div class="text-xs text-gray-500">Debt (Mkopo)</div>
-                            <div id="creditSales" class="font-bold text-red-600 text-sm">Ksh 0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- DUKA EXPENSES WIDGET (MATUMIZI) -->
-                <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-gray-800 text-sm flex items-center gap-1.5">
-                            <i class="fa-solid fa-receipt text-amber-600"></i> Shop Expenses (Matumizi)
-                        </h3>
-                        <button onclick="logExpensePrompt()" class="text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg">
-                            + Add Expense
-                        </button>
-                    </div>
-                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded-xl border border-gray-100">
-                        <span class="text-xs text-gray-500">Today's Matumizi Total:</span>
-                        <span id="expensesToday" class="font-bold text-amber-700 text-xs">Ksh 0</span>
-                    </div>
-                </div>
-
-                <!-- MKOPO DEBTOR LEDGER WIDGET -->
-                <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-gray-800 text-sm flex items-center gap-1">
-                            <i class="fa-solid fa-book-open text-red-500"></i> Active Mkopo (Debts)
-                        </h3>
-                        <span id="totalDebtBadge" class="text-xs font-extrabold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">Total: Ksh 0</span>
-                    </div>
-                    <div id="dashboardDebtList" class="space-y-2"></div>
-                </div>
-
-                <!-- INVENTORY PREVIEW -->
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-gray-800 text-base">Inventory Preview</h3>
-                        <button onclick="switchTab('inventory')" class="text-xs font-semibold text-emerald-600 hover:underline">View all</button>
-                    </div>
-                    <div id="dashboardProductList" class="space-y-2"></div>
-                </div>
-            </div>
-
-            <!-- SALES HISTORY TAB -->
-            <div id="tab-sales" class="space-y-4 hidden">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-800">Sales History</h2>
-                    <button onclick="quickSaleModal()" class="bg-emerald-600 text-white text-xs font-bold py-2 px-3 rounded-lg">+ New Sale</button>
-                </div>
-                <div id="salesHistoryList" class="space-y-2"></div>
-            </div>
-
-            <!-- INVENTORY TAB WITH SEARCH BAR -->
-            <div id="tab-inventory" class="space-y-4 hidden">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-800">Manage Inventory</h2>
-                    <button onclick="addNewProductPrompt()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm flex items-center gap-1">
-                        <i class="fa-solid fa-plus"></i> Add Product
-                    </button>
-                </div>
-
-                <!-- SEARCH BAR -->
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-gray-400 text-sm"></i>
-                    <input type="text" id="inventorySearch" onkeyup="filterInventorySearch()" placeholder="Search product name or scan barcode..." class="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-emerald-600">
-                </div>
-
-                <div id="fullInventoryList" class="space-y-2"></div>
-            </div>
-
-            <!-- PROFILE TAB -->
-            <div id="tab-profile" class="space-y-4 hidden">
-                <h2 class="text-xl font-bold text-gray-800">Duka Profile</h2>
-                <div class="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-                    <div class="flex items-center space-x-3 border-b pb-4">
-                        <div class="bg-emerald-100 text-emerald-700 p-3 rounded-full text-xl font-bold">
-                            <i class="fa-solid fa-store"></i>
-                        </div>
-                        <div>
-                            <h3 id="profileShopName" class="font-bold text-gray-800 text-base">My Duka</h3>
-                            <p id="profileShopLocation" class="text-xs text-gray-500">Location: Mwea</p>
-                        </div>
-                    </div>
-                    <button onclick="exitToDirectory()" class="w-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold py-2.5 rounded-xl hover:bg-emerald-100">
-                        ← Back to Duka Directory
-                    </button>
-                </div>
-            </div>
-
-        </main>
-
-        <!-- BOTTOM NAVIGATION BAR -->
-        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center max-w-md mx-auto z-40 shadow-lg">
-            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center text-emerald-600 transition-colors">
-                <i class="fa-solid fa-house text-lg"></i>
-                <span class="text-xs font-medium">Dashboard</span>
-            </button>
-            <button onclick="switchTab('sales')" id="nav-sales" class="flex flex-col items-center text-gray-400 hover:text-emerald-600 transition-colors">
-                <i class="fa-solid fa-receipt text-lg"></i>
-                <span class="text-xs font-medium">Sales</span>
-            </button>
-            <button onclick="switchTab('inventory')" id="nav-inventory" class="flex flex-col items-center text-gray-400 hover:text-emerald-600 transition-colors">
-                <i class="fa-solid fa-box text-lg"></i>
-                <span class="text-xs font-medium">Inventory</span>
-            </button>
-            <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center text-gray-400 hover:text-emerald-600 transition-colors">
-                <i class="fa-solid fa-user text-lg"></i>
-                <span class="text-xs font-medium">Profile</span>
-            </button>
-        </nav>
-    </div>
-
     <!-- JAVASCRIPT SUPABASE CLOUD & DEXIE ENGINE -->
     <script>
         const SUPABASE_URL = "https://torzbgvwjhthzuifdses.supabase.co";
@@ -322,9 +20,8 @@
 
         async function renderDirectory() {
             const listElem = document.getElementById('shopDirectoryList');
-            listElem.innerHTML = '';
-
-            // Fetch cloud shops if connected to internet
+            
+            // Background sync from cloud if online
             if (supabase) {
                 try {
                     const { data: cloudDukas } = await supabase.from('dukas').select('*');
@@ -337,6 +34,12 @@
                         saveShopsList();
                     }
                 } catch(e) {}
+            }
+
+            listElem.innerHTML = '';
+            if (registeredShops.length === 0) {
+                listElem.innerHTML = `<p class="text-xs text-gray-400 italic py-2 text-center">No dukas registered yet.</p>`;
+                return;
             }
 
             registeredShops.forEach(shop => {
@@ -366,15 +69,27 @@
             const shopId = 'duka_' + Date.now();
             const newShop = { id: shopId, name, phone, location, pin };
 
+            // 1. Push immediately to local state and update UI
             registeredShops.push(newShop);
             saveShopsList();
+            renderDirectory();
 
-            // Cloud Backup
+            // 2. Clear form inputs
+            document.getElementById('newShopName').value = '';
+            document.getElementById('newShopPhone').value = '';
+            document.getElementById('newShopLocation').value = '';
+            document.getElementById('newShopPin').value = '';
+
+            // 3. Background Cloud Backup to Supabase
             if (supabase) {
-                await supabase.from('dukas').insert([{ id: shopId, name, phone, location, pin }]);
+                try {
+                    await supabase.from('dukas').insert([{ id: shopId, name, phone, location, pin }]);
+                } catch (e) {
+                    console.error("Cloud sync failed, saved locally:", e);
+                }
             }
 
-            renderDirectory();
+            // 4. Enter the shop directly
             enterShop(shopId);
         }
 
@@ -441,7 +156,6 @@
         async function syncLocalDataToCloud() {
             if (!supabase || !activeShop) return;
             try {
-                // Sync unsynced sales to Supabase cloud
                 const unsyncedSales = await db.sales.where('synced').equals(0).toArray();
                 for (let s of unsyncedSales) {
                     const { error } = await supabase.from('sales').insert([{
@@ -845,8 +559,5 @@
             window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
         }
 
-        saveShopsList();
         renderDirectory();
     </script>
-</body>
-</html>
