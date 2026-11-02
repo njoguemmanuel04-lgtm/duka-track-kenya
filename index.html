@@ -10,14 +10,48 @@
 </head>
 <body class="bg-gray-100 font-sans pb-24">
 
+    <!-- ================= LOGIN / REGISTER MODAL ================= -->
+    <div id="authModal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
+            <div class="text-center">
+                <div class="bg-emerald-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-2 text-2xl shadow-md">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">DUKATRACK</h3>
+                <p class="text-xs text-gray-500">Enter your shop details to continue</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-gray-600 block mb-1">Phone Number</label>
+                    <input type="tel" id="loginPhone" placeholder="e.g. 0712345678" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-emerald-600">
+                </div>
+
+                <div>
+                    <label class="text-xs font-semibold text-gray-600 block mb-1">Shop Name</label>
+                    <input type="text" id="loginShopName" placeholder="e.g. Mwea Fresh Duka" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-emerald-600">
+                </div>
+
+                <div>
+                    <label class="text-xs font-semibold text-gray-600 block mb-1">4-Digit PIN</label>
+                    <input type="password" id="loginPin" maxlength="4" placeholder="••••" required class="w-full border rounded-xl px-3 py-2 text-sm text-center tracking-widest focus:outline-emerald-600">
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-all">
+                    Open My Shop Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- TOP HEADER -->
-    <header class="bg-white px-4 py-3 shadow-sm sticky top-0 z-50 flex justify-between items-center">
+    <header class="bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex justify-between items-center">
         <div class="flex items-center space-x-2">
             <div class="bg-emerald-600 text-white p-2 rounded-lg">
                 <i class="fa-solid fa-store text-lg"></i>
             </div>
             <div>
-                <h1 class="font-bold text-gray-800 text-lg leading-none tracking-wide">DUKATRACK</h1>
+                <h1 id="headerShopName" class="font-bold text-gray-800 text-base leading-none tracking-wide">DUKATRACK</h1>
                 <span id="networkStatus" class="text-xs font-semibold text-emerald-600">● Offline Ready</span>
             </div>
         </div>
@@ -103,9 +137,7 @@
                 <h2 class="text-xl font-bold text-gray-800">Sales History</h2>
                 <button onclick="quickSaleModal()" class="bg-emerald-600 text-white text-xs font-bold py-2 px-3 rounded-lg">+ New Sale</button>
             </div>
-            <div id="salesHistoryList" class="space-y-2">
-                <!-- Sales transactions rendered here -->
-            </div>
+            <div id="salesHistoryList" class="space-y-2"></div>
         </div>
 
         <!-- ================= 3. FULL INVENTORY VIEW ================= -->
@@ -116,9 +148,7 @@
                     <i class="fa-solid fa-plus"></i> Add Product
                 </button>
             </div>
-            <div id="fullInventoryList" class="space-y-2">
-                <!-- Full product items rendered here -->
-            </div>
+            <div id="fullInventoryList" class="space-y-2"></div>
         </div>
 
         <!-- ================= 4. PROFILE / SHOP SETTINGS VIEW ================= -->
@@ -130,24 +160,23 @@
                         <i class="fa-solid fa-store"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-800 text-base">DUKATRACK Shop</h3>
-                        <p class="text-xs text-gray-500">Location: Kenya • Offline Mode Enabled</p>
+                        <h3 id="profileShopName" class="font-bold text-gray-800 text-base">My Shop</h3>
+                        <p id="profilePhone" class="text-xs text-gray-500">Phone: --</p>
                     </div>
                 </div>
                 <div class="space-y-2 text-sm text-gray-700">
                     <div class="flex justify-between py-1 border-b">
                         <span class="text-gray-500">Database Engine</span>
-                        <span class="font-semibold">IndexedDB (Dexie.js)</span>
+                        <span class="font-semibold">IndexedDB (Offline Tenant)</span>
                     </div>
                     <div class="flex justify-between py-1 border-b">
                         <span class="text-gray-500">Currency</span>
                         <span class="font-semibold">KES (Ksh)</span>
                     </div>
-                    <div class="flex justify-between py-1">
-                        <span class="text-gray-500">Sync Status</span>
-                        <span id="profileSyncStatus" class="font-semibold text-emerald-600">Ready</span>
-                    </div>
                 </div>
+                <button onclick="logoutShop()" class="w-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold py-2.5 rounded-xl hover:bg-amber-100">
+                    Switch / Logout Shop
+                </button>
                 <button onclick="resetLocalData()" class="w-full bg-red-50 text-red-600 border border-red-200 text-xs font-bold py-2.5 rounded-xl hover:bg-red-100">
                     Reset Local Database Cache
                 </button>
@@ -176,24 +205,67 @@
         </button>
     </nav>
 
-    <!-- JAVASCRIPT ENGINE & TAB CONTROLLER -->
+    <!-- JAVASCRIPT MULTI-TENANT ENGINE -->
     <script>
-        const db = new Dexie("DukaPOS_DB");
-        db.version(1).stores({
-            products: '++id, name, stock, unit, price, min_stock',
-            sales: '++id, total, method, synced, created_at'
-        });
+        let db;
+        let currentShop = JSON.parse(localStorage.getItem('dukatrack_active_shop')) || null;
 
-        db.on('populate', () => {
-            db.products.bulkAdd([
-                { name: 'Ugali Flour', stock: 24, unit: 'kg', price: 180, min_stock: 5 },
-                { name: 'Cooking Oil', stock: 12, unit: 'L', price: 350, min_stock: 15 },
-                { name: 'Blueband', stock: 18, unit: '500g', price: 220, min_stock: 5 },
-                { name: 'Sugar', stock: 30, unit: 'kg', price: 160, min_stock: 10 }
-            ]);
-        });
+        function initDatabase() {
+            if (!currentShop) {
+                document.getElementById('authModal').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('authModal').classList.add('hidden');
 
-        db.open().then(() => loadAppData());
+            // Create an isolated database per shop phone number
+            const dbName = `DukaTrack_${currentShop.phone}`;
+            db = new Dexie(dbName);
+            db.version(1).stores({
+                products: '++id, name, stock, unit, price, min_stock',
+                sales: '++id, total, method, synced, created_at'
+            });
+
+            db.on('populate', () => {
+                db.products.bulkAdd([
+                    { name: 'Ugali Flour', stock: 24, unit: 'kg', price: 180, min_stock: 5 },
+                    { name: 'Cooking Oil', stock: 12, unit: 'L', price: 350, min_stock: 15 },
+                    { name: 'Blueband', stock: 18, unit: '500g', price: 220, min_stock: 5 },
+                    { name: 'Sugar', stock: 30, unit: 'kg', price: 160, min_stock: 10 }
+                ]);
+            });
+
+            db.open().then(() => {
+                document.getElementById('headerShopName').innerText = currentShop.shopName;
+                document.getElementById('profileShopName').innerText = currentShop.shopName;
+                document.getElementById('profilePhone').innerText = `Phone: ${currentShop.phone}`;
+                loadAppData();
+            });
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const phone = document.getElementById('loginPhone').value.trim();
+            const shopName = document.getElementById('loginShopName').value.trim();
+            const pin = document.getElementById('loginPin').value.trim();
+
+            if (pin.length !== 4) {
+                alert("Please enter a valid 4-digit PIN");
+                return;
+            }
+
+            currentShop = { phone, shopName, pin };
+            localStorage.setItem('dukatrack_active_shop', JSON.stringify(currentShop));
+            initDatabase();
+        }
+
+        function logoutShop() {
+            if (confirm("Switch or log out of this shop?")) {
+                localStorage.removeItem('dukatrack_active_shop');
+                location.reload();
+            }
+        }
+
+        initDatabase();
 
         // TAB SWITCHING LOGIC
         function switchTab(tabName) {
@@ -209,6 +281,7 @@
         }
 
         async function loadAppData() {
+            if (!db) return;
             await loadDashboard();
             await loadInventoryView();
             await loadSalesHistory();
@@ -366,15 +439,15 @@
         }
 
         function resetLocalData() {
-            if (confirm("Are you sure you want to reset local storage database?")) {
-                Dexie.delete("DukaPOS_DB").then(() => {
+            if (confirm("Are you sure you want to reset local database cache for this shop?")) {
+                Dexie.delete(`DukaTrack_${currentShop.phone}`).then(() => {
                     location.reload();
                 });
             }
         }
 
         function triggerSync() {
-            alert("All local sales records are synced!");
+            alert("All local sales records for your shop are synced!");
         }
 
         // Online / Offline Status Detection
