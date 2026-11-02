@@ -310,7 +310,7 @@
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
         } catch (e) {
-            console.warn("Supabase init error:", e);
+            console.warn("Supabase initialization deferred:", e);
         }
 
         let registeredShops = JSON.parse(localStorage.getItem('dukatrack_shops_list')) || [
@@ -327,8 +327,8 @@
             localStorage.setItem('dukatrack_shops_list', JSON.stringify(registeredShops));
         }
 
-        // Synchronous immediate render to avoid hanging on network requests
-        function renderDirectoryHTML() {
+        // Fast synchronous UI draw
+        function drawDirectoryUI() {
             const listElem = document.getElementById('shopDirectoryList');
             if (!listElem) return;
 
@@ -355,29 +355,29 @@
             });
         }
 
-        async function fetchCloudShops() {
+        // Background cloud sync
+        function syncCloudDukas() {
             if (!supabase) return;
-            try {
-                const { data: cloudDukas, error } = await supabase.from('dukas').select('*');
-                if (!error && cloudDukas && cloudDukas.length > 0) {
-                    let updated = false;
-                    cloudDukas.forEach(cd => {
+            supabase.from('dukas').select('*').then(({ data, error }) => {
+                if (!error && data && data.length > 0) {
+                    let hasNew = false;
+                    data.forEach(cd => {
                         if (!registeredShops.some(s => s.id === cd.id)) {
                             registeredShops.push({ id: cd.id, name: cd.name, phone: cd.phone, location: cd.location });
-                            updated = true;
+                            hasNew = true;
                         }
                     });
-                    if (updated) {
+                    if (hasNew) {
                         saveShopsList();
-                        renderDirectoryHTML();
+                        drawDirectoryUI();
                     }
                 }
-            } catch(e) {}
+            }).catch(() => {});
         }
 
         function renderDirectory() {
-            renderDirectoryHTML();
-            fetchCloudShops();
+            drawDirectoryUI();
+            syncCloudDukas();
         }
 
         async function handleCreateShop(event) {
@@ -397,17 +397,17 @@
             const shopId = 'duka_' + Date.now();
             const newShop = { id: shopId, name, phone, location, pin };
 
-            // Render instantly locally
+            // 1. Add locally and re-draw instantly
             registeredShops.push(newShop);
             saveShopsList();
-            renderDirectoryHTML();
+            drawDirectoryUI();
 
             nameInput.value = '';
             phoneInput.value = '';
             if (locInput) locInput.value = '';
             pinInput.value = '';
 
-            // Send to cloud asynchronously
+            // 2. Non-blocking cloud upload
             if (supabase) {
                 supabase.from('dukas').insert([{ id: shopId, name, phone, location, pin }]).then(() => {}).catch(() => {});
             }
@@ -458,7 +458,7 @@
             const app = document.getElementById('view-app');
             if (app) app.classList.add('hidden');
             if (landing) landing.classList.remove('hidden');
-            renderDirectoryHTML();
+            drawDirectoryUI();
         }
 
         function switchTab(tabName) {
@@ -925,12 +925,14 @@
             const debtStr = debtElem ? debtElem.innerText : 'Ksh 0';
             const expenseStr = expenseElem ? expenseElem.innerText : 'Ksh 0';
 
-            const msg = `📊 *DUKATRACK DAILY REPORT* - ${activeShop ? activeShop.name : 'Duka'}\n📅 Date: ${today}\n------------------------------\n💰 Total Sales: ${salesStr}\n💵 Cash Received: ${cashStr}\n📱 M-Pesa Total: ${mpesaStr}\n📕 Mkopo (Debts): ${debtStr}\n💸 Expenses Today: ${expenseStr}\n------------------------------\n📈 *NET PROFIT: ${profitStr}*`;
+            const msg = `📊 *DUKATRACK DAILY REPORT* - ${activeShop ? activeShop.name : 'Duka'}\n📅 Date: ${today}\n------------------------------\n💰 Total Sales: ${salesStr}\n💵 Cash Received: ${cashStr}\n📱 M-Pesa Total: ${mpesaStr}\n` +
+                        `📕 Mkopo (Debts): ${debtStr}\n💸 Expenses Today: ${expenseStr}\n------------------------------\n📈 *NET PROFIT: ${profitStr}*`;
 
             const encodedMsg = encodeURIComponent(msg);
             window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
         }
 
+        // Boot execution
         renderDirectory();
     </script>
 </body>
